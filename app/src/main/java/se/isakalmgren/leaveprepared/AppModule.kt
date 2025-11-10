@@ -5,6 +5,10 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 val appModule = module {
+    single<AppConfig> {
+        AppConfig() // Default configuration, can be customized here
+    }
+    
     single<SmhiApiService> {
         val retrofit = Retrofit.Builder()
             .baseUrl("https://opendata-download-metfcst.smhi.se/api/")

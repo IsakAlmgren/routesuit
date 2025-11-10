@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -31,6 +32,7 @@ sealed class WeatherUiState {
 @Composable
 fun WeatherScreen(
     apiService: SmhiApiService = koinInject(),
+    appConfig: AppConfig = koinInject(),
     modifier: Modifier = Modifier
 ) {
     var uiState by remember { mutableStateOf<WeatherUiState>(WeatherUiState.Loading) }
@@ -41,7 +43,7 @@ fun WeatherScreen(
             uiState = WeatherUiState.Loading
             try {
                 val response = apiService.getWeatherForecast()
-                val recommendations = analyzeWeatherForCommutes(response.timeSeries)
+                val recommendations = analyzeWeatherForCommutes(response.timeSeries, appConfig)
                 uiState = WeatherUiState.Success(recommendations)
             } catch (e: Exception) {
                 uiState = WeatherUiState.Error("Failed to fetch weather: ${e.message}")
@@ -191,9 +193,9 @@ fun WeatherRecommendationCard(
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
             )
-            
-            Divider()
-            
+
+            HorizontalDivider(Modifier, DividerDefaults.Thickness, DividerDefaults.color)
+
             // Clothing recommendation
             Card(
                 modifier = Modifier.fillMaxWidth(),

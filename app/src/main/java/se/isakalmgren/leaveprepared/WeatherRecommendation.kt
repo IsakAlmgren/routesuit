@@ -34,14 +34,14 @@ enum class ClothingLevel {
     VERY_COLD       // < -5°C - Heavy winter gear
 }
 
-fun getClothingLevel(temperature: Double): ClothingLevel {
+fun getClothingLevel(temperature: Double, config: AppConfig): ClothingLevel {
     return when {
-        temperature > 20 -> ClothingLevel.VERY_LIGHT
-        temperature > 15 -> ClothingLevel.LIGHT
-        temperature > 10 -> ClothingLevel.MODERATE
-        temperature > 5 -> ClothingLevel.WARM
-        temperature > 0 -> ClothingLevel.VERY_WARM
-        temperature > -5 -> ClothingLevel.COLD
+        temperature > config.temperatureVeryLight -> ClothingLevel.VERY_LIGHT
+        temperature > config.temperatureLight -> ClothingLevel.LIGHT
+        temperature > config.temperatureModerate -> ClothingLevel.MODERATE
+        temperature > config.temperatureWarm -> ClothingLevel.WARM
+        temperature > config.temperatureVeryWarm -> ClothingLevel.VERY_WARM
+        temperature > config.temperatureCold -> ClothingLevel.COLD
         else -> ClothingLevel.VERY_COLD
     }
 }
@@ -58,11 +58,11 @@ fun getClothingMessage(level: ClothingLevel): String {
     }
 }
 
-fun parseTime(timeString: String): ZonedDateTime? {
+fun parseTime(timeString: String, config: AppConfig): ZonedDateTime? {
     return try {
         val instant = Instant.parse(timeString)
-        // Convert to Sweden timezone (Europe/Stockholm handles DST automatically)
-        instant.atZone(ZoneId.of("Europe/Stockholm"))
+        // Convert to configured timezone
+        instant.atZone(config.timezone)
     } catch (e: Exception) {
         null
     }
@@ -79,18 +79,28 @@ fun getDayLabel(date: LocalDate, currentDate: LocalDate): String {
     }
 }
 
+fun formatHourForDisplay(hour24: Int): String {
+    return when {
+        hour24 == 0 -> "12 AM"
+        hour24 < 12 -> "$hour24 AM"
+        hour24 == 12 -> "12 PM"
+        else -> "${hour24 - 12} PM"
+    }
+}
+
 fun analyzeWeatherForCommute(
     timeSeries: List<TimeSeries>,
     startHour: Int,
     endHour: Int,
-    commuteName: String
+    commuteName: String,
+    config: AppConfig
 ): WeatherRecommendation? {
-    val now = ZonedDateTime.now(ZoneId.of("Europe/Stockholm"))
+    val now = ZonedDateTime.now(config.timezone)
     val currentDate = now.toLocalDate()
     
     // Filter time series for the specified hour range (local time) and only future times
     val allCommuteHours = timeSeries.filter { timeEntry ->
-        val localTime = parseTime(timeEntry.time)
+        val localTime = parseTime(timeEntry.time, config)
         localTime?.let {
             val hour = it.hour
             // Only include times in the future and within the hour range
@@ -102,7 +112,7 @@ fun analyzeWeatherForCommute(
     
     // Group by date and get the first (earliest) date's commute hours
     val commuteHoursByDate = allCommuteHours.groupBy { entry ->
-        parseTime(entry.time)?.toLocalDate()
+        parseTime(entry.time, config)?.toLocalDate()
     }
     
     // Get the earliest date (next occurrence)
@@ -120,21 +130,21 @@ fun analyzeWeatherForCommute(
     val maxPrecipitationProb = commuteHours.maxOfOrNull { it.data.probabilityOfPrecipitation ?: 0.0 } ?: 0.0
     val maxPrecipitationAmount = commuteHours.maxOfOrNull { it.data.precipitationAmountMean ?: 0.0 } ?: 0.0
     
-    // Determine if rain clothes are needed
-    // Rain clothes needed if: precipitation probability > 50% OR precipitation amount > 0.5mm
-    val needsRainClothes = maxPrecipitationProb > 50.0 || maxPrecipitationAmount > 0.5
+    // Determine if rain clothes are needed using config thresholds
+    val needsRainClothes = maxPrecipitationProb > config.precipitationProbabilityThreshold || 
+                          maxPrecipitationAmount > config.precipitationAmountThreshold
     
-    val clothingLevel = getClothingLevel(avgTemperature)
+    val clothingLevel = getClothingLevel(avgTemperature, config)
     val clothingMessage = getClothingMessage(clothingLevel)
     
     val message = buildString {
         append(clothingMessage)
         if (needsRainClothes) {
             append("\n🌧️ Bring rain clothes! ")
-            if (maxPrecipitationProb > 50) {
+            if (maxPrecipitationProb > config.precipitationProbabilityThreshold) {
                 append("Precipitation probability: ${maxPrecipitationProb.toInt()}%")
             }
-            if (maxPrecipitationAmount > 0.5) {
+            if (maxPrecipitationAmount > config.precipitationAmountThreshold) {
                 append(" Expected precipitation: ${String.format("%.1f", maxPrecipitationAmount)} mm")
             }
         } else {
@@ -157,20 +167,38 @@ fun analyzeWeatherForCommute(
     )
 }
 
-fun analyzeWeatherForCommutes(timeSeries: List<TimeSeries>): CommuteRecommendations {
-    val now = ZonedDateTime.now(ZoneId.of("Europe/Stockholm"))
+fun analyzeWeatherForCommutes(timeSeries: List<TimeSeries>, config: AppConfig): CommuteRecommendations {
+    val now = ZonedDateTime.now(config.timezone)
     val currentHour = now.hour
     
-    // Morning commute: 7-9 AM local time
-    // Only show if the morning window hasn't passed today (before 9 AM)
-    val morningCommuteRaw = if (currentHour < 9) {
-        analyzeWeatherForCommute(timeSeries, 7, 9, "Morning Commute (7-9 AM)")
+    // Morning commute: using config timespan
+    // Only show if the morning window hasn't passed today
+    val morningCommuteRaw = if (currentHour < config.morningCommuteEndHour) {
+        val startDisplay = formatHourForDisplay(config.morningCommuteStartHour)
+        val endDisplay = formatHourForDisplay(config.morningCommuteEndHour)
+        val commuteName = "Morning Commute ($startDisplay-$endDisplay)"
+        analyzeWeatherForCommute(
+            timeSeries, 
+            config.morningCommuteStartHour, 
+            config.morningCommuteEndHour, 
+            commuteName,
+            config
+        )
     } else {
         null
     }
     
-    // Evening commute: 4-7 PM local time (16-19 in 24h format)
-    val eveningCommute = analyzeWeatherForCommute(timeSeries, 16, 19, "Evening Commute (4-7 PM)")
+    // Evening commute: using config timespan
+    val eveningStartDisplay = formatHourForDisplay(config.eveningCommuteStartHour)
+    val eveningEndDisplay = formatHourForDisplay(config.eveningCommuteEndHour)
+    val eveningCommuteName = "Evening Commute ($eveningStartDisplay-$eveningEndDisplay)"
+    val eveningCommute = analyzeWeatherForCommute(
+        timeSeries, 
+        config.eveningCommuteStartHour, 
+        config.eveningCommuteEndHour, 
+        eveningCommuteName,
+        config
+    )
     
     // If evening commute needs rain clothes, morning commute should also recommend bringing them
     val morningCommute = if (morningCommuteRaw != null && eveningCommute?.needsRainClothes == true && !morningCommuteRaw.needsRainClothes) {

@@ -15,11 +15,12 @@ class WeatherNotificationWorker(
 ) : CoroutineWorker(context, params), KoinComponent {
     
     private val apiService: SmhiApiService by inject()
+    private val appConfig: AppConfig by inject()
     
     override suspend fun doWork(): Result {
         return try {
             val response = apiService.getWeatherForecast()
-            val recommendations = analyzeWeatherForCommutes(response.timeSeries)
+            val recommendations = analyzeWeatherForCommutes(response.timeSeries, appConfig)
             
             sendNotification(recommendations)
             Result.success()
