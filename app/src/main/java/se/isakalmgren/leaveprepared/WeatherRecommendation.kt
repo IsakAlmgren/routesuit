@@ -193,9 +193,3 @@ fun analyzeWeatherForCommutes(timeSeries: List<TimeSeries>): CommuteRecommendati
     
     return CommuteRecommendations(morningCommute, eveningCommute)
 }
-
-// Keep for backward compatibility with notification worker
-fun analyzeWeatherForMorning(timeSeries: List<TimeSeries>): WeatherRecommendation? {
-    return analyzeWeatherForCommute(timeSeries, 6, 9, "Morning")
-}
-
