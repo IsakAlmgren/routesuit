@@ -5,8 +5,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -14,15 +19,39 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import org.koin.compose.koinInject
 import se.isakalmgren.leaveprepared.ui.theme.LeavePreparedTheme
+
+sealed class WeatherUiState {
+    data object Loading : WeatherUiState()
+    data class Success(val recommendations: CommuteRecommendations) : WeatherUiState()
+    data class Error(val message: String) : WeatherUiState()
+}
 
 @Composable
 fun WeatherScreen(
-    viewModel: WeatherViewModel = viewModel(),
+    apiService: SmhiApiService = koinInject(),
     modifier: Modifier = Modifier
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    var uiState by remember { mutableStateOf<WeatherUiState>(WeatherUiState.Loading) }
+    val coroutineScope = rememberCoroutineScope()
+    
+    fun fetchWeather() {
+        coroutineScope.launch {
+            uiState = WeatherUiState.Loading
+            try {
+                val response = apiService.getWeatherForecast()
+                val recommendations = analyzeWeatherForCommutes(response.timeSeries)
+                uiState = WeatherUiState.Success(recommendations)
+            } catch (e: Exception) {
+                uiState = WeatherUiState.Error("Failed to fetch weather: ${e.message}")
+            }
+        }
+    }
+    
+    LaunchedEffect(Unit) {
+        fetchWeather()
+    }
     
     Column(
         modifier = modifier
@@ -76,7 +105,7 @@ fun WeatherScreen(
                 }
                 
                 Button(
-                    onClick = { viewModel.fetchWeather() },
+                    onClick = { fetchWeather() },
                     modifier = Modifier.padding(top = 8.dp)
                 ) {
                     Text("Refresh")
@@ -105,7 +134,7 @@ fun WeatherScreen(
                             modifier = Modifier.padding(top = 8.dp)
                         )
                         Button(
-                            onClick = { viewModel.fetchWeather() },
+                            onClick = { fetchWeather() },
                             modifier = Modifier.padding(top = 16.dp)
                         ) {
                             Text("Retry")

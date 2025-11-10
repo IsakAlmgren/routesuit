@@ -64,6 +64,10 @@ dependencies {
     // WorkManager for notifications
     implementation(libs.androidx.work.runtime.ktx)
     
+    // Koin for dependency injection
+    implementation(libs.koin.android)
+    implementation(libs.koin.androidx.compose)
+    
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

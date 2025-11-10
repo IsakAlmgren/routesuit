@@ -6,15 +6,18 @@ import android.content.Context
 import androidx.core.app.NotificationCompat
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
 class WeatherNotificationWorker(
     context: Context,
     params: WorkerParameters
-) : CoroutineWorker(context, params) {
+) : CoroutineWorker(context, params), KoinComponent {
+    
+    private val apiService: SmhiApiService by inject()
     
     override suspend fun doWork(): Result {
         return try {
-            val apiService = SmhiApiService.create()
             val response = apiService.getWeatherForecast()
             val recommendations = analyzeWeatherForCommutes(response.timeSeries)
             
