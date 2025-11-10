@@ -1,12 +1,17 @@
 package se.isakalmgren.leaveprepared
 
+import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 val appModule = module {
+    single<ConfigRepository> {
+        ConfigRepository(androidContext())
+    }
+    
     single<AppConfig> {
-        AppConfig() // Default configuration, can be customized here
+        get<ConfigRepository>().getConfig()
     }
     
     single<SmhiApiService> {

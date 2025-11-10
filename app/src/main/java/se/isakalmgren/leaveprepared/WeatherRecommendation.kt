@@ -25,36 +25,36 @@ data class CommuteRecommendations(
 )
 
 enum class ClothingLevel {
-    VERY_LIGHT,    // > 20°C - Light clothing
-    LIGHT,         // 15-20°C - T-shirt, light jacket
-    MODERATE,      // 10-15°C - Long sleeves, light jacket
-    WARM,          // 5-10°C - Sweater, jacket
-    VERY_WARM,     // 0-5°C - Heavy jacket, layers
-    COLD,          // -5 to 0°C - Winter coat, warm layers
-    VERY_COLD       // < -5°C - Heavy winter gear
+    LEVEL_1,  // > 20°C
+    LEVEL_2,  // 15-20°C
+    LEVEL_3,  // 10-15°C
+    LEVEL_4,  // 5-10°C
+    LEVEL_5,  // 0-5°C
+    LEVEL_6,  // -5 to 0°C
+    LEVEL_7   // < -5°C
 }
 
 fun getClothingLevel(temperature: Double, config: AppConfig): ClothingLevel {
     return when {
-        temperature > config.temperatureVeryLight -> ClothingLevel.VERY_LIGHT
-        temperature > config.temperatureLight -> ClothingLevel.LIGHT
-        temperature > config.temperatureModerate -> ClothingLevel.MODERATE
-        temperature > config.temperatureWarm -> ClothingLevel.WARM
-        temperature > config.temperatureVeryWarm -> ClothingLevel.VERY_WARM
-        temperature > config.temperatureCold -> ClothingLevel.COLD
-        else -> ClothingLevel.VERY_COLD
+        temperature > config.temperatureVeryLight -> ClothingLevel.LEVEL_1
+        temperature > config.temperatureLight -> ClothingLevel.LEVEL_2
+        temperature > config.temperatureModerate -> ClothingLevel.LEVEL_3
+        temperature > config.temperatureWarm -> ClothingLevel.LEVEL_4
+        temperature > config.temperatureVeryWarm -> ClothingLevel.LEVEL_5
+        temperature > config.temperatureCold -> ClothingLevel.LEVEL_6
+        else -> ClothingLevel.LEVEL_7
     }
 }
 
-fun getClothingMessage(level: ClothingLevel): String {
+fun getClothingMessage(level: ClothingLevel, config: AppConfig): String {
     return when (level) {
-        ClothingLevel.VERY_LIGHT -> "Light clothing - shorts and t-shirt weather"
-        ClothingLevel.LIGHT -> "Light clothing - t-shirt with a light jacket"
-        ClothingLevel.MODERATE -> "Moderate clothing - long sleeves and a light jacket"
-        ClothingLevel.WARM -> "Warm clothing - sweater and jacket recommended"
-        ClothingLevel.VERY_WARM -> "Very warm clothing - heavy jacket and layers"
-        ClothingLevel.COLD -> "Cold weather - winter coat and warm layers essential"
-        ClothingLevel.VERY_COLD -> "Very cold - heavy winter gear required"
+        ClothingLevel.LEVEL_1 -> config.clothingMessageLevel1
+        ClothingLevel.LEVEL_2 -> config.clothingMessageLevel2
+        ClothingLevel.LEVEL_3 -> config.clothingMessageLevel3
+        ClothingLevel.LEVEL_4 -> config.clothingMessageLevel4
+        ClothingLevel.LEVEL_5 -> config.clothingMessageLevel5
+        ClothingLevel.LEVEL_6 -> config.clothingMessageLevel6
+        ClothingLevel.LEVEL_7 -> config.clothingMessageLevel7
     }
 }
 
@@ -135,7 +135,7 @@ fun analyzeWeatherForCommute(
                           maxPrecipitationAmount > config.precipitationAmountThreshold
     
     val clothingLevel = getClothingLevel(avgTemperature, config)
-    val clothingMessage = getClothingMessage(clothingLevel)
+    val clothingMessage = getClothingMessage(clothingLevel, config)
     
     val message = buildString {
         append(clothingMessage)
@@ -204,7 +204,7 @@ fun analyzeWeatherForCommutes(timeSeries: List<TimeSeries>, config: AppConfig): 
     val morningCommute = if (morningCommuteRaw != null && eveningCommute?.needsRainClothes == true && !morningCommuteRaw.needsRainClothes) {
         // Update morning recommendation to include rain gear for later
         val updatedMessage = buildString {
-            append(getClothingMessage(morningCommuteRaw.clothingLevel))
+            append(getClothingMessage(morningCommuteRaw.clothingLevel, config))
             append("\n🌧️ Bring rain clothes for later! ")
             append("Rain expected on your way home (${eveningCommute.precipitationProbability.toInt()}% chance, ")
             append("${String.format("%.1f", eveningCommute.precipitationAmount)} mm)")

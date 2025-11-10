@@ -26,6 +26,15 @@ data class AppConfig(
     val precipitationProbabilityThreshold: Double = 50.0,  // Percentage
     val precipitationAmountThreshold: Double = 0.5,        // Millimeters
     
+    // Clothing level messages (configurable by user)
+    val clothingMessageLevel1: String = "Light clothing - shorts and t-shirt weather",
+    val clothingMessageLevel2: String = "Light clothing - t-shirt with a light jacket",
+    val clothingMessageLevel3: String = "Moderate clothing - long sleeves and a light jacket",
+    val clothingMessageLevel4: String = "Cool weather - sweater and jacket recommended",
+    val clothingMessageLevel5: String = "Cold weather - heavy jacket and layers",
+    val clothingMessageLevel6: String = "Very cold - winter coat and warm layers essential",
+    val clothingMessageLevel7: String = "Extremely cold - heavy winter gear required",
+    
     // Timezone
     val timezone: ZoneId = ZoneId.of("Europe/Stockholm")
 )

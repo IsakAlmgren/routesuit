@@ -10,6 +10,10 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import se.isakalmgren.leaveprepared.ui.theme.LeavePreparedTheme
 
@@ -35,10 +39,20 @@ class MainActivity : ComponentActivity() {
         
         setContent {
             LeavePreparedTheme {
+                var showSettings by remember { mutableStateOf(false) }
+                
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    WeatherScreen(
-                        modifier = Modifier.padding(innerPadding)
-                    )
+                    if (showSettings) {
+                        SettingsScreen(
+                            onBack = { showSettings = false },
+                            modifier = Modifier.padding(innerPadding)
+                        )
+                    } else {
+                        WeatherScreen(
+                            onSettingsClick = { showSettings = true },
+                            modifier = Modifier.padding(innerPadding)
+                        )
+                    }
                 }
             }
         }

@@ -3,10 +3,13 @@ package se.isakalmgren.leaveprepared
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -32,9 +35,13 @@ sealed class WeatherUiState {
 @Composable
 fun WeatherScreen(
     apiService: SmhiApiService = koinInject(),
-    appConfig: AppConfig = koinInject(),
+    configRepository: ConfigRepository = koinInject(),
+    onSettingsClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    val configState = configRepository.config.collectAsState()
+    val appConfig = configState.value
+    
     var uiState by remember { mutableStateOf<WeatherUiState>(WeatherUiState.Loading) }
     val coroutineScope = rememberCoroutineScope()
     
@@ -51,7 +58,7 @@ fun WeatherScreen(
         }
     }
     
-    LaunchedEffect(Unit) {
+    LaunchedEffect(appConfig) {
         fetchWeather()
     }
     
@@ -63,12 +70,30 @@ fun WeatherScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text(
-            text = "Leave Prepared",
-            fontSize = 32.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(vertical = 16.dp)
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Leave Prepared",
+                fontSize = 32.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(vertical = 16.dp)
+            )
+            IconButton(
+                onClick = onSettingsClick,
+                modifier = Modifier.padding(8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Settings,
+                    contentDescription = "Settings",
+                    tint = MaterialTheme.colorScheme.onSurface
+                )
+            }
+        }
         
         when (val state = uiState) {
             is WeatherUiState.Loading -> {
@@ -80,14 +105,17 @@ fun WeatherScreen(
                 if (state.recommendations.morningCommute != null) {
                     WeatherRecommendationCard(
                         recommendation = state.recommendations.morningCommute,
-                        title = "🌅 To Work"
+                        title = "🌅 To Work",
+                        appConfig = appConfig
                     )
                 }
                 
                 if (state.recommendations.eveningCommute != null) {
                     WeatherRecommendationCard(
                         recommendation = state.recommendations.eveningCommute,
-                        title = "🌆 From Work"
+                        title = "🌆 From Work",
+                        appConfig = appConfig
+
                     )
                 }
                 
@@ -151,7 +179,8 @@ fun WeatherScreen(
 @Composable
 fun WeatherRecommendationCard(
     recommendation: WeatherRecommendation,
-    title: String = ""
+    title: String = "",
+    appConfig: AppConfig
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -214,7 +243,7 @@ fun WeatherRecommendationCard(
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                     Text(
-                        text = getClothingMessage(recommendation.clothingLevel),
+                        text = getClothingMessage(recommendation.clothingLevel, appConfig),
                         textAlign = TextAlign.Center,
                         modifier = Modifier.padding(top = 8.dp),
                         color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -311,7 +340,7 @@ fun WeatherRecommendationCardPreview_MorningRain() {
         WeatherRecommendationCard(
             recommendation = WeatherRecommendation(
                 needsRainClothes = true,
-                clothingLevel = ClothingLevel.WARM,
+                clothingLevel = ClothingLevel.LEVEL_4,
                 temperature = 8.5,
                 precipitationProbability = 75.0,
                 precipitationAmount = 2.3,
@@ -320,7 +349,8 @@ fun WeatherRecommendationCardPreview_MorningRain() {
                 rainForLater = false,
                 dayLabel = "Tomorrow"
             ),
-            title = "🌅 To Work"
+            title = "🌅 To Work",
+            appConfig = AppConfig()
         )
     }
 }
@@ -332,7 +362,7 @@ fun WeatherRecommendationCardPreview_MorningRainForLater() {
         WeatherRecommendationCard(
             recommendation = WeatherRecommendation(
                 needsRainClothes = true,
-                clothingLevel = ClothingLevel.MODERATE,
+                clothingLevel = ClothingLevel.LEVEL_3,
                 temperature = 12.0,
                 precipitationProbability = 0.0,
                 precipitationAmount = 0.0,
@@ -341,7 +371,8 @@ fun WeatherRecommendationCardPreview_MorningRainForLater() {
                 rainForLater = true,
                 dayLabel = "Tomorrow"
             ),
-            title = "🌅 To Work"
+            title = "🌅 To Work",
+            appConfig = AppConfig()
         )
     }
 }
@@ -353,7 +384,7 @@ fun WeatherRecommendationCardPreview_MorningNoRain() {
         WeatherRecommendationCard(
             recommendation = WeatherRecommendation(
                 needsRainClothes = false,
-                clothingLevel = ClothingLevel.LIGHT,
+                clothingLevel = ClothingLevel.LEVEL_2,
                 temperature = 18.0,
                 precipitationProbability = 10.0,
                 precipitationAmount = 0.0,
@@ -362,7 +393,8 @@ fun WeatherRecommendationCardPreview_MorningNoRain() {
                 rainForLater = false,
                 dayLabel = "Today"
             ),
-            title = "🌅 To Work"
+            title = "🌅 To Work",
+            appConfig = AppConfig()
         )
     }
 }
@@ -374,16 +406,17 @@ fun WeatherRecommendationCardPreview_EveningRain() {
         WeatherRecommendationCard(
             recommendation = WeatherRecommendation(
                 needsRainClothes = true,
-                clothingLevel = ClothingLevel.COLD,
+                clothingLevel = ClothingLevel.LEVEL_6,
                 temperature = -2.0,
                 precipitationProbability = 90.0,
                 precipitationAmount = 5.0,
-                message = "Cold weather - winter coat and warm layers essential\n🌧️ Bring rain clothes! Precipitation probability: 90% Expected precipitation: 5.0 mm",
+                message = "Very cold - winter coat and warm layers essential\n🌧️ Bring rain clothes! Precipitation probability: 90% Expected precipitation: 5.0 mm",
                 timeWindow = "Evening Commute (4-7 PM)",
                 rainForLater = false,
                 dayLabel = "Today"
             ),
-            title = "🌆 From Work"
+            title = "🌆 From Work",
+            appConfig = AppConfig()
         )
     }
 }
@@ -395,7 +428,7 @@ fun WeatherRecommendationCardPreview_EveningNoRain() {
         WeatherRecommendationCard(
             recommendation = WeatherRecommendation(
                 needsRainClothes = false,
-                clothingLevel = ClothingLevel.VERY_LIGHT,
+                clothingLevel = ClothingLevel.LEVEL_1,
                 temperature = 25.0,
                 precipitationProbability = 5.0,
                 precipitationAmount = 0.0,
@@ -404,7 +437,8 @@ fun WeatherRecommendationCardPreview_EveningNoRain() {
                 rainForLater = false,
                 dayLabel = "Today"
             ),
-            title = "🌆 From Work"
+            title = "🌆 From Work",
+            appConfig = AppConfig()
         )
     }
 }
@@ -432,7 +466,7 @@ fun WeatherScreenPreview_Success() {
                 WeatherRecommendationCard(
                     recommendation = WeatherRecommendation(
                         needsRainClothes = true,
-                        clothingLevel = ClothingLevel.WARM,
+                        clothingLevel = ClothingLevel.LEVEL_4,
                         temperature = 8.5,
                         precipitationProbability = 75.0,
                         precipitationAmount = 2.3,
@@ -441,13 +475,14 @@ fun WeatherScreenPreview_Success() {
                         rainForLater = false,
                         dayLabel = "Tomorrow"
                     ),
-                    title = "🌅 To Work"
+                    title = "🌅 To Work",
+                    appConfig = AppConfig()
                 )
                 
                 WeatherRecommendationCard(
                     recommendation = WeatherRecommendation(
                         needsRainClothes = false,
-                        clothingLevel = ClothingLevel.MODERATE,
+                        clothingLevel = ClothingLevel.LEVEL_3,
                         temperature = 10.0,
                         precipitationProbability = 20.0,
                         precipitationAmount = 0.0,
@@ -456,7 +491,8 @@ fun WeatherScreenPreview_Success() {
                         rainForLater = false,
                         dayLabel = "Today"
                     ),
-                    title = "🌆 From Work"
+                    title = "🌆 From Work",
+                    appConfig = AppConfig()
                 )
                 
                 Button(
