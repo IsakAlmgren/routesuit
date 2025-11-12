@@ -27,6 +27,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.koin.compose.koinInject
 import se.isakalmgren.leaveprepared.ui.theme.LeavePreparedTheme
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalContext
 
 sealed class WeatherUiState {
     data object Loading : WeatherUiState()
@@ -44,6 +46,7 @@ fun WeatherScreen(
 ) {
     val configState = configRepository.config.collectAsState()
     val appConfig = configState.value
+    val context = LocalContext.current
     
     var uiState by remember { mutableStateOf<WeatherUiState>(WeatherUiState.Loading) }
     val coroutineScope = rememberCoroutineScope()
@@ -62,10 +65,11 @@ fun WeatherScreen(
                     longitude = lonStr,
                     latitude = latStr
                 )
-                val recommendations = analyzeWeatherForCommutes(response.timeSeries, appConfig)
+                val recommendations = analyzeWeatherForCommutes(response.timeSeries, appConfig, context)
                 uiState = WeatherUiState.Success(recommendations)
             } catch (e: Exception) {
-                uiState = WeatherUiState.Error("Failed to fetch weather: ${e.message}")
+                val errorMsg = context.getString(R.string.failed_to_fetch_weather, e.message ?: "")
+                uiState = WeatherUiState.Error(errorMsg)
             }
         }
     }
@@ -104,7 +108,7 @@ fun WeatherScreen(
                                 strokeWidth = 4.dp
                             )
                             Text(
-                                text = "Loading weather forecast...",
+                                text = stringResource(R.string.loading_weather_forecast),
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -122,7 +126,7 @@ fun WeatherScreen(
                         if (state.recommendations.morningCommute != null) {
                             WeatherRecommendationCard(
                                 recommendation = state.recommendations.morningCommute,
-                                title = "To Work",
+                                title = stringResource(R.string.to_work),
                                 appConfig = appConfig
                             )
                         }
@@ -130,7 +134,7 @@ fun WeatherScreen(
                         if (state.recommendations.eveningCommute != null) {
                             WeatherRecommendationCard(
                                 recommendation = state.recommendations.eveningCommute,
-                                title = "From Work",
+                                title = stringResource(R.string.from_work),
                                 appConfig = appConfig
                             )
                         }
@@ -145,7 +149,7 @@ fun WeatherScreen(
                                 .fillMaxWidth()
                                 .padding(top = 8.dp, bottom = 16.dp)
                         ) {
-                            Text("Refresh")
+                            Text(stringResource(R.string.refresh))
                         }
                     }
                 }
@@ -193,7 +197,7 @@ fun WeatherRecommendationCard(
             
             // Temperature display
             Text(
-                text = "${String.format("%.1f", recommendation.temperature)}°C",
+                text = stringResource(R.string.temperature_format, recommendation.temperature),
                 fontSize = 56.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,
@@ -244,7 +248,7 @@ private fun ClothingRecommendationCard(clothingMessage: String) {
         containerColor = MaterialTheme.colorScheme.primaryContainer,
     ) {
         Text(
-            text = "Clothing Recommendation",
+            text = stringResource(R.string.clothing_recommendation),
             fontWeight = FontWeight.SemiBold,
             fontSize = 16.sp,
             color = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -268,9 +272,9 @@ private fun RainRecommendationCard(recommendation: WeatherRecommendation) {
         ) {
             Text(
                 text = if (recommendation.rainForLater) {
-                    "🌧️ Bring Rain Clothes for Later!"
+                    stringResource(R.string.bring_rain_clothes_later)
                 } else {
-                    "🌧️ Rain Clothes Needed!"
+                    stringResource(R.string.bring_rain_clothes)
                 },
                 fontWeight = FontWeight.Bold,
                 fontSize = 20.sp,
@@ -278,20 +282,20 @@ private fun RainRecommendationCard(recommendation: WeatherRecommendation) {
             )
             if (recommendation.rainForLater) {
                 Text(
-                    text = "Rain expected on your way home",
+                    text = stringResource(R.string.rain_expected_later),
                     modifier = Modifier.padding(top = 8.dp),
                     color = MaterialTheme.colorScheme.onErrorContainer,
                     textAlign = TextAlign.Center
                 )
             } else {
                 Text(
-                    text = "Precipitation probability: ${recommendation.precipitationProbability.toInt()}%",
+                    text = stringResource(R.string.precipitation_probability, recommendation.precipitationProbability.toInt()),
                     modifier = Modifier.padding(top = 8.dp),
                     color = MaterialTheme.colorScheme.onErrorContainer
                 )
                 if (recommendation.precipitationAmount > 0) {
                     Text(
-                        text = "Expected: ${String.format("%.1f", recommendation.precipitationAmount)} mm",
+                        text = stringResource(R.string.expected_precipitation, recommendation.precipitationAmount),
                         color = MaterialTheme.colorScheme.onErrorContainer
                     )
                 }
@@ -302,13 +306,13 @@ private fun RainRecommendationCard(recommendation: WeatherRecommendation) {
             containerColor = MaterialTheme.colorScheme.tertiaryContainer,
         ) {
             Text(
-                text = "☀️ No Rain Expected",
+                text = stringResource(R.string.no_rain_expected),
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp,
                 color = MaterialTheme.colorScheme.onTertiaryContainer
             )
             Text(
-                text = "You can skip the rain gear today",
+                text = stringResource(R.string.skip_rain_gear),
                 modifier = Modifier.padding(top = 8.dp),
                 color = MaterialTheme.colorScheme.onTertiaryContainer
             )
@@ -344,7 +348,7 @@ fun WeatherTopAppBar(onSettingsClick: () -> Unit) {
         navigationIcon = {
             Icon(
                 painter = painterResource(id = R.drawable.ic_launcher_foreground),
-                contentDescription = "App Icon",
+                contentDescription = stringResource(R.string.content_description_app_icon),
                 modifier = Modifier
                     .padding(start = 16.dp)
                     .size(50.dp),
@@ -353,7 +357,7 @@ fun WeatherTopAppBar(onSettingsClick: () -> Unit) {
         },
         title = {
             Text(
-                text = "Leave Prepared",
+                text = stringResource(R.string.app_name),
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,
@@ -366,7 +370,7 @@ fun WeatherTopAppBar(onSettingsClick: () -> Unit) {
             IconButton(onClick = onSettingsClick) {
                 Icon(
                     imageVector = Icons.Filled.Settings,
-                    contentDescription = "Settings",
+                    contentDescription = stringResource(R.string.content_description_settings),
                     tint = MaterialTheme.colorScheme.onSurface
                 )
             }
@@ -390,7 +394,7 @@ private fun ErrorCard(message: String, onRetry: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Error",
+                text = stringResource(R.string.error),
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onErrorContainer
             )
@@ -403,7 +407,7 @@ private fun ErrorCard(message: String, onRetry: () -> Unit) {
                 onClick = onRetry,
                 modifier = Modifier.padding(top = 16.dp)
             ) {
-                Text("Retry")
+                Text(stringResource(R.string.retry))
             }
         }
     }
@@ -419,7 +423,7 @@ private fun NoCommuteDataCard() {
         shape = MaterialTheme.shapes.medium
     ) {
         Text(
-            text = "No commute data available for today",
+            text = stringResource(R.string.no_commute_data),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(20.dp),
@@ -435,6 +439,7 @@ private fun NoCommuteDataCard() {
 @Composable
 fun WeatherRecommendationCardPreview_MorningRain() {
     LeavePreparedTheme(darkTheme = true) {
+        val context = LocalContext.current
         val appConfig = AppConfig()
         val recommendationBase = WeatherRecommendation(
             needsRainClothes = true,
@@ -447,7 +452,7 @@ fun WeatherRecommendationCardPreview_MorningRain() {
             rainForLater = false,
             dayLabel = "Tomorrow"
         )
-        val recommendation = recommendationBase.copy(message = generateRecommendationMessage(recommendationBase, appConfig))
+        val recommendation = recommendationBase.copy(message = generateRecommendationMessage(recommendationBase, appConfig, context))
         WeatherRecommendationCard(
             recommendation = recommendation,
             title = "To Work",
@@ -460,6 +465,7 @@ fun WeatherRecommendationCardPreview_MorningRain() {
 @Composable
 fun WeatherRecommendationCardPreview_MorningRainForLater() {
     LeavePreparedTheme {
+        val context = LocalContext.current
         val appConfig = AppConfig()
         val recommendationBase = WeatherRecommendation(
             needsRainClothes = true,
@@ -472,7 +478,7 @@ fun WeatherRecommendationCardPreview_MorningRainForLater() {
             rainForLater = true,
             dayLabel = "Tomorrow"
         )
-        val recommendation = recommendationBase.copy(message = generateRecommendationMessage(recommendationBase, appConfig))
+        val recommendation = recommendationBase.copy(message = generateRecommendationMessage(recommendationBase, appConfig, context))
         WeatherRecommendationCard(
             recommendation = recommendation,
             title = "To Work",
@@ -485,6 +491,7 @@ fun WeatherRecommendationCardPreview_MorningRainForLater() {
 @Composable
 fun WeatherRecommendationCardPreview_MorningNoRain() {
     LeavePreparedTheme {
+        val context = LocalContext.current
         val appConfig = AppConfig()
         val recommendationBase = WeatherRecommendation(
             needsRainClothes = false,
@@ -497,7 +504,7 @@ fun WeatherRecommendationCardPreview_MorningNoRain() {
             rainForLater = false,
             dayLabel = "Today"
         )
-        val recommendation = recommendationBase.copy(message = generateRecommendationMessage(recommendationBase, appConfig))
+        val recommendation = recommendationBase.copy(message = generateRecommendationMessage(recommendationBase, appConfig, context))
         WeatherRecommendationCard(
             recommendation = recommendation,
             title = "To Work",
@@ -510,6 +517,7 @@ fun WeatherRecommendationCardPreview_MorningNoRain() {
 @Composable
 fun WeatherRecommendationCardPreview_EveningRain() {
     LeavePreparedTheme {
+        val context = LocalContext.current
         val appConfig = AppConfig()
         val recommendationBase = WeatherRecommendation(
             needsRainClothes = true,
@@ -522,7 +530,7 @@ fun WeatherRecommendationCardPreview_EveningRain() {
             rainForLater = false,
             dayLabel = "Today"
         )
-        val recommendation = recommendationBase.copy(message = generateRecommendationMessage(recommendationBase, appConfig))
+        val recommendation = recommendationBase.copy(message = generateRecommendationMessage(recommendationBase, appConfig, context))
         WeatherRecommendationCard(
             recommendation = recommendation,
             title = "From Work",
@@ -535,6 +543,7 @@ fun WeatherRecommendationCardPreview_EveningRain() {
 @Composable
 fun WeatherRecommendationCardPreview_EveningNoRain() {
     LeavePreparedTheme {
+        val context = LocalContext.current
         val appConfig = AppConfig()
         val recommendationBase = WeatherRecommendation(
             needsRainClothes = false,
@@ -547,7 +556,7 @@ fun WeatherRecommendationCardPreview_EveningNoRain() {
             rainForLater = false,
             dayLabel = "Today"
         )
-        val recommendation = recommendationBase.copy(message = generateRecommendationMessage(recommendationBase, appConfig))
+        val recommendation = recommendationBase.copy(message = generateRecommendationMessage(recommendationBase, appConfig, context))
         WeatherRecommendationCard(
             recommendation = recommendation,
             title = "From Work",
@@ -560,6 +569,7 @@ fun WeatherRecommendationCardPreview_EveningNoRain() {
 @Composable
 fun WeatherScreenPreview_Success() {
     LeavePreparedTheme {
+        val context = LocalContext.current
         val appConfig = AppConfig()
         Surface(modifier = Modifier.fillMaxSize()) {
             Column(
@@ -581,7 +591,7 @@ fun WeatherScreenPreview_Success() {
                     rainForLater = false,
                     dayLabel = "Tomorrow"
                 )
-                val morningRecommendation = morningRecommendationBase.copy(message = generateRecommendationMessage(morningRecommendationBase, appConfig))
+                val morningRecommendation = morningRecommendationBase.copy(message = generateRecommendationMessage(morningRecommendationBase, appConfig, context))
                 
                 val eveningRecommendationBase = WeatherRecommendation(
                     needsRainClothes = false,
@@ -594,7 +604,7 @@ fun WeatherScreenPreview_Success() {
                     rainForLater = false,
                     dayLabel = "Today"
                 )
-                val eveningRecommendation = eveningRecommendationBase.copy(message = generateRecommendationMessage(eveningRecommendationBase, appConfig))
+                val eveningRecommendation = eveningRecommendationBase.copy(message = generateRecommendationMessage(eveningRecommendationBase, appConfig, context))
                 
                 WeatherRecommendationCard(
                     recommendation = morningRecommendation,

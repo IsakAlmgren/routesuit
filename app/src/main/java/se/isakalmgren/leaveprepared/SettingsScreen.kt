@@ -22,6 +22,12 @@ import android.Manifest
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.ui.res.stringResource
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import android.app.Activity
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,10 +35,12 @@ fun SettingsScreen(
     navController: NavController,
     configRepository: ConfigRepository = koinInject(),
     locationHelper: LocationHelper = koinInject(),
+    languageRepository: LanguageRepository = koinInject(),
     modifier: Modifier = Modifier
 ) {
     val configState = configRepository.config.collectAsState()
     val currentConfig = configState.value
+    val context = LocalContext.current
     
     // State management using a data class for better organization
     var settingsState by remember(currentConfig) {
@@ -64,16 +72,16 @@ fun SettingsScreen(
                             latitude = String.format(java.util.Locale.US, "%.4f", location.second)
                         )
                     } else {
-                        showError = "Could not get current location. Please try again or enter coordinates manually."
+                        showError = context.getString(R.string.could_not_get_location)
                     }
                 } catch (e: Exception) {
-                    showError = "Error getting location: ${e.message}"
+                    showError = context.getString(R.string.error_getting_location, e.message ?: "")
                 } finally {
                     isFetchingLocation = false
                 }
             }
         } else {
-            showError = "Location permission denied. Please grant location permission or enter coordinates manually."
+            showError = context.getString(R.string.location_permission_denied)
         }
     }
     
@@ -96,10 +104,10 @@ fun SettingsScreen(
                             latitude = String.format(java.util.Locale.US, "%.4f", location.second)
                         )
                     } else {
-                        showError = "Could not get current location. Please try again or enter coordinates manually."
+                        showError = context.getString(R.string.could_not_get_location)
                     }
                 } catch (e: Exception) {
-                    showError = "Error getting location: ${e.message}"
+                    showError = context.getString(R.string.error_getting_location, e.message ?: "")
                 } finally {
                     isFetchingLocation = false
                 }
@@ -107,10 +115,16 @@ fun SettingsScreen(
         }
     }
     
-    // Track if there are unsaved changes
-    val hasChanges = remember(settingsState, currentConfig) {
+    // Track initial language to detect changes
+    val initialLanguage = remember { languageRepository.getSelectedLanguage() }
+    var currentLanguage by remember { mutableStateOf(initialLanguage) }
+    
+    // Track if there are unsaved changes (config or language)
+    val hasChanges = remember(settingsState, currentConfig, currentLanguage, initialLanguage) {
         val currentState = SettingsState.fromConfig(currentConfig)
-        settingsState != currentState
+        val configChanged = settingsState != currentState
+        val languageChanged = currentLanguage != initialLanguage
+        configChanged || languageChanged
     }
     
     // Update state when config changes externally
@@ -122,14 +136,27 @@ fun SettingsScreen(
         try {
             val newConfig = settingsState.toConfig(currentConfig)
             configRepository.saveConfig(newConfig)
-            showSaveSuccess = true
-            showError = null
-            coroutineScope.launch {
-                kotlinx.coroutines.delay(2000)
-                showSaveSuccess = false
+            
+            // Save language preference if it changed
+            val languageChanged = currentLanguage != initialLanguage
+            if (languageChanged) {
+                languageRepository.setLanguage(currentLanguage)
+            }
+            
+            // If language changed, recreate activity to apply locale
+            if (languageChanged) {
+                val activity = context as? Activity
+                activity?.recreate()
+            } else {
+                showSaveSuccess = true
+                showError = null
+                coroutineScope.launch {
+                    kotlinx.coroutines.delay(2000)
+                    showSaveSuccess = false
+                }
             }
         } catch (e: Exception) {
-            showError = "Failed to save settings: ${e.message}"
+            showError = context.getString(R.string.failed_to_save_settings, e.message ?: "")
         }
     }
     
@@ -150,12 +177,12 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Settings") },
+                title = { Text(stringResource(R.string.settings)) },
                 navigationIcon = {
                     IconButton(onClick = { handleBackNavigation() }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = stringResource(R.string.back)
                         )
                     }
                 }
@@ -175,7 +202,7 @@ fun SettingsScreen(
                 ) {
                     if (hasChanges) {
                         Text(
-                            text = "You have unsaved changes",
+                            text = stringResource(R.string.you_have_unsaved_changes),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(bottom = 4.dp)
@@ -189,14 +216,14 @@ fun SettingsScreen(
                             onClick = { showResetDialog = true },
                             modifier = Modifier.weight(1f)
                         ) {
-                            Text("Reset")
+                            Text(stringResource(R.string.reset))
                         }
                         Button(
                             onClick = { saveConfig() },
                             modifier = Modifier.weight(2f),
                             enabled = hasChanges
                         ) {
-                            Text("Save Changes")
+                            Text(stringResource(R.string.save_changes))
                         }
                     }
                 }
@@ -215,7 +242,7 @@ fun SettingsScreen(
             // Success/Error messages
             if (showSaveSuccess) {
                 SuccessCard(
-                    message = "Settings saved successfully!",
+                    message = stringResource(R.string.settings_saved_successfully),
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(modifier = Modifier.height(8.dp))
@@ -230,17 +257,71 @@ fun SettingsScreen(
                 Spacer(modifier = Modifier.height(8.dp))
             }
             
+            // Language Section
+            SettingsSection(
+                title = stringResource(R.string.language),
+                subtitle = stringResource(R.string.language_subtitle)
+            ) {
+                var expanded by remember { mutableStateOf(false) }
+                
+                ExposedDropdownMenuBox(
+                    expanded = expanded,
+                    onExpandedChange = { expanded = !expanded },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    OutlinedTextField(
+                        value = when (currentLanguage) {
+                            AppLanguage.AUTO -> stringResource(R.string.language_auto)
+                            AppLanguage.ENGLISH -> stringResource(R.string.language_english)
+                            AppLanguage.SWEDISH -> stringResource(R.string.language_swedish)
+                        },
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text(stringResource(R.string.language)) },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                        modifier = Modifier
+                            .menuAnchor()
+                            .fillMaxWidth()
+                    )
+                    ExposedDropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }
+                    ) {
+                        AppLanguage.values().forEach { language ->
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        when (language) {
+                                            AppLanguage.AUTO -> stringResource(R.string.language_auto)
+                                            AppLanguage.ENGLISH -> stringResource(R.string.language_english)
+                                            AppLanguage.SWEDISH -> stringResource(R.string.language_swedish)
+                                        }
+                                    )
+                                },
+                                onClick = {
+                                    currentLanguage = language
+                                    // Language will be saved and applied when user clicks Save
+                                    expanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(20.dp))
+            
             // Location Section
             SettingsSection(
-                title = "Location",
-                subtitle = "Set the location for weather forecasts"
+                title = stringResource(R.string.location),
+                subtitle = stringResource(R.string.location_subtitle)
             ) {
                 val longitudeError = remember(settingsState.longitude) {
                     val lon = settingsState.longitude.toDoubleOrNull()
                     when {
-                        settingsState.longitude.isBlank() -> "Required"
-                        lon == null -> "Invalid number"
-                        lon < -180 || lon > 180 -> "Must be between -180 and 180"
+                        settingsState.longitude.isBlank() -> context.getString(R.string.required)
+                        lon == null -> context.getString(R.string.invalid_number)
+                        lon < -180 || lon > 180 -> context.getString(R.string.must_be_between, "-180", "180")
                         else -> null
                     }
                 }
@@ -248,9 +329,9 @@ fun SettingsScreen(
                 val latitudeError = remember(settingsState.latitude) {
                     val lat = settingsState.latitude.toDoubleOrNull()
                     when {
-                        settingsState.latitude.isBlank() -> "Required"
-                        lat == null -> "Invalid number"
-                        lat < -90 || lat > 90 -> "Must be between -90 and 90"
+                        settingsState.latitude.isBlank() -> context.getString(R.string.required)
+                        lat == null -> context.getString(R.string.invalid_number)
+                        lat < -90 || lat > 90 -> context.getString(R.string.must_be_between, "-90", "90")
                         else -> null
                     }
                 }
@@ -258,7 +339,7 @@ fun SettingsScreen(
                 OutlinedTextField(
                     value = settingsState.longitude,
                     onValueChange = { settingsState = settingsState.copy(longitude = it) },
-                    label = { Text("Longitude") },
+                    label = { Text(stringResource(R.string.longitude)) },
                     modifier = Modifier.fillMaxWidth(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
@@ -267,7 +348,7 @@ fun SettingsScreen(
                         if (longitudeError != null) {
                             Text(longitudeError, color = MaterialTheme.colorScheme.error)
                         } else {
-                            Text("Longitude (-180 to 180)")
+                            Text(stringResource(R.string.longitude_hint))
                         }
                     }
                 )
@@ -277,7 +358,7 @@ fun SettingsScreen(
                 OutlinedTextField(
                     value = settingsState.latitude,
                     onValueChange = { settingsState = settingsState.copy(latitude = it) },
-                    label = { Text("Latitude") },
+                    label = { Text(stringResource(R.string.latitude)) },
                     modifier = Modifier.fillMaxWidth(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
@@ -286,7 +367,7 @@ fun SettingsScreen(
                         if (latitudeError != null) {
                             Text(latitudeError, color = MaterialTheme.colorScheme.error)
                         } else {
-                            Text("Latitude (-90 to 90)")
+                            Text(stringResource(R.string.latitude_hint))
                         }
                     }
                 )
@@ -304,7 +385,7 @@ fun SettingsScreen(
                             strokeWidth = 2.dp
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Getting Location...")
+                        Text(stringResource(R.string.getting_location))
                     } else {
                         Icon(
                             imageVector = Icons.Default.LocationOn,
@@ -312,7 +393,7 @@ fun SettingsScreen(
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Get Current Location")
+                        Text(stringResource(R.string.get_current_location))
                     }
                 }
             }
@@ -321,11 +402,11 @@ fun SettingsScreen(
             
             // Commute Times Section
             SettingsSection(
-                title = "Commute Times",
-                subtitle = "24-hour format (0-23)"
+                title = stringResource(R.string.commute_times),
+                subtitle = stringResource(R.string.commute_times_subtitle)
             ) {
                 CommuteTimeInput(
-                    label = "Morning Commute",
+                    label = stringResource(R.string.morning_commute),
                     startHour = settingsState.morningStart,
                     endHour = settingsState.morningEnd,
                     onStartChange = { settingsState = settingsState.copy(morningStart = it) },
@@ -335,7 +416,7 @@ fun SettingsScreen(
                 Spacer(modifier = Modifier.height(12.dp))
                 
                 CommuteTimeInput(
-                    label = "Evening Commute",
+                    label = stringResource(R.string.evening_commute),
                     startHour = settingsState.eveningStart,
                     endHour = settingsState.eveningEnd,
                     onStartChange = { settingsState = settingsState.copy(eveningStart = it) },
@@ -347,49 +428,49 @@ fun SettingsScreen(
             
             // Temperature Thresholds Section
             SettingsSection(
-                title = "Temperature Thresholds",
-                subtitle = "Temperature in °C for clothing recommendations"
+                title = stringResource(R.string.temperature_thresholds),
+                subtitle = stringResource(R.string.temperature_thresholds_subtitle)
             ) {
                 TemperatureThresholdInput(
-                    label = "Very Light",
+                    label = stringResource(R.string.very_light),
                     value = settingsState.tempVeryLight,
                     onValueChange = { settingsState = settingsState.copy(tempVeryLight = it) },
-                    description = "Shorts and t-shirt weather"
+                    description = stringResource(R.string.very_light_description)
                 )
                 
                 TemperatureThresholdInput(
-                    label = "Light",
+                    label = stringResource(R.string.light),
                     value = settingsState.tempLight,
                     onValueChange = { settingsState = settingsState.copy(tempLight = it) },
-                    description = "T-shirt with light jacket"
+                    description = stringResource(R.string.light_description)
                 )
                 
                 TemperatureThresholdInput(
-                    label = "Moderate",
+                    label = stringResource(R.string.moderate),
                     value = settingsState.tempModerate,
                     onValueChange = { settingsState = settingsState.copy(tempModerate = it) },
-                    description = "Long sleeves and light jacket"
+                    description = stringResource(R.string.moderate_description)
                 )
                 
                 TemperatureThresholdInput(
-                    label = "Cool",
+                    label = stringResource(R.string.cool),
                     value = settingsState.tempWarm,
                     onValueChange = { settingsState = settingsState.copy(tempWarm = it) },
-                    description = "Sweater and jacket recommended"
+                    description = stringResource(R.string.cool_description)
                 )
                 
                 TemperatureThresholdInput(
-                    label = "Cold",
+                    label = stringResource(R.string.cold),
                     value = settingsState.tempVeryWarm,
                     onValueChange = { settingsState = settingsState.copy(tempVeryWarm = it) },
-                    description = "Heavy jacket and layers needed"
+                    description = stringResource(R.string.cold_description)
                 )
                 
                 TemperatureThresholdInput(
-                    label = "Very Cold",
+                    label = stringResource(R.string.very_cold),
                     value = settingsState.tempCold,
                     onValueChange = { settingsState = settingsState.copy(tempCold = it) },
-                    description = "Winter coat and warm layers"
+                    description = stringResource(R.string.very_cold_description)
                 )
             }
             
@@ -397,15 +478,15 @@ fun SettingsScreen(
             
             // Precipitation Thresholds Section
             SettingsSection(
-                title = "Precipitation Thresholds",
-                subtitle = "When to recommend rain clothes"
+                title = stringResource(R.string.precipitation_thresholds),
+                subtitle = stringResource(R.string.precipitation_thresholds_subtitle)
             ) {
                 val probError = remember(settingsState.precipProbThreshold) {
                     val prob = settingsState.precipProbThreshold.toDoubleOrNull()
                     when {
-                        settingsState.precipProbThreshold.isBlank() -> "Required"
-                        prob == null -> "Invalid number"
-                        prob < 0 || prob > 100 -> "Must be 0-100"
+                        settingsState.precipProbThreshold.isBlank() -> context.getString(R.string.required)
+                        prob == null -> context.getString(R.string.invalid_number)
+                        prob < 0 || prob > 100 -> context.getString(R.string.must_be_0_to_100)
                         else -> null
                     }
                 }
@@ -413,9 +494,9 @@ fun SettingsScreen(
                 val amountError = remember(settingsState.precipAmountThreshold) {
                     val amount = settingsState.precipAmountThreshold.toDoubleOrNull()
                     when {
-                        settingsState.precipAmountThreshold.isBlank() -> "Required"
-                        amount == null -> "Invalid number"
-                        amount < 0 -> "Must be positive"
+                        settingsState.precipAmountThreshold.isBlank() -> context.getString(R.string.required)
+                        amount == null -> context.getString(R.string.invalid_number)
+                        amount < 0 -> context.getString(R.string.must_be_positive)
                         else -> null
                     }
                 }
@@ -423,7 +504,7 @@ fun SettingsScreen(
                 OutlinedTextField(
                     value = settingsState.precipProbThreshold,
                     onValueChange = { settingsState = settingsState.copy(precipProbThreshold = it) },
-                    label = { Text("Probability Threshold (%)") },
+                    label = { Text(stringResource(R.string.probability_threshold_percent)) },
                     modifier = Modifier.fillMaxWidth(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
@@ -432,7 +513,7 @@ fun SettingsScreen(
                         if (probError != null) {
                             Text(probError, color = MaterialTheme.colorScheme.error)
                         } else {
-                            Text("Minimum probability to recommend rain clothes")
+                            Text(stringResource(R.string.probability_threshold_hint))
                         }
                     }
                 )
@@ -442,7 +523,7 @@ fun SettingsScreen(
                 OutlinedTextField(
                     value = settingsState.precipAmountThreshold,
                     onValueChange = { settingsState = settingsState.copy(precipAmountThreshold = it) },
-                    label = { Text("Amount Threshold (mm)") },
+                    label = { Text(stringResource(R.string.amount_threshold_mm)) },
                     modifier = Modifier.fillMaxWidth(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
@@ -451,7 +532,7 @@ fun SettingsScreen(
                         if (amountError != null) {
                             Text(amountError, color = MaterialTheme.colorScheme.error)
                         } else {
-                            Text("Minimum expected precipitation amount")
+                            Text(stringResource(R.string.amount_threshold_hint))
                         }
                     }
                 )
@@ -461,8 +542,8 @@ fun SettingsScreen(
             
             // Clothing Messages Section
             SettingsSection(
-                title = "Clothing Messages",
-                subtitle = "Customize messages for each clothing level"
+                title = stringResource(R.string.clothing_messages),
+                subtitle = stringResource(R.string.clothing_messages_subtitle)
             ) {
                 ClothingMessageInput(
                     level = 1,
@@ -522,8 +603,8 @@ fun SettingsScreen(
         if (showResetDialog) {
             AlertDialog(
                 onDismissRequest = { showResetDialog = false },
-                title = { Text("Reset to Defaults") },
-                text = { Text("Are you sure you want to reset all settings to their default values? This cannot be undone.") },
+                title = { Text(stringResource(R.string.reset_to_defaults)) },
+                text = { Text(stringResource(R.string.reset_confirmation)) },
                 confirmButton = {
                     TextButton(
                         onClick = {
@@ -532,12 +613,12 @@ fun SettingsScreen(
                             showError = null
                         }
                     ) {
-                        Text("Reset")
+                        Text(stringResource(R.string.reset))
                     }
                 },
                 dismissButton = {
                     TextButton(onClick = { showResetDialog = false }) {
-                        Text("Cancel")
+                        Text(stringResource(R.string.cancel))
                     }
                 }
             )
@@ -547,8 +628,8 @@ fun SettingsScreen(
         if (showExitDialog) {
             AlertDialog(
                 onDismissRequest = { showExitDialog = false },
-                title = { Text("Unsaved Changes") },
-                text = { Text("You have unsaved changes. Are you sure you want to leave? Your changes will be lost.") },
+                title = { Text(stringResource(R.string.unsaved_changes)) },
+                text = { Text(stringResource(R.string.unsaved_changes_message)) },
                 confirmButton = {
                     TextButton(
                         onClick = {
@@ -556,12 +637,12 @@ fun SettingsScreen(
                             navController.popBackStack()
                         }
                     ) {
-                        Text("Discard")
+                        Text(stringResource(R.string.discard))
                     }
                 },
                 dismissButton = {
                     TextButton(onClick = { showExitDialog = false }) {
-                        Text("Cancel")
+                        Text(stringResource(R.string.cancel))
                     }
                 }
             )
@@ -628,6 +709,7 @@ private fun CommuteTimeInput(
     onStartChange: (String) -> Unit,
     onEndChange: (String) -> Unit
 ) {
+    val context = LocalContext.current
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
             text = label,
@@ -641,9 +723,9 @@ private fun CommuteTimeInput(
             val startError = remember(startHour) {
                 val hour = startHour.toIntOrNull()
                 when {
-                    startHour.isBlank() -> "Required"
-                    hour == null -> "Invalid number"
-                    hour < 0 || hour > 23 -> "Must be 0-23"
+                    startHour.isBlank() -> context.getString(R.string.required)
+                    hour == null -> context.getString(R.string.invalid_number)
+                    hour < 0 || hour > 23 -> context.getString(R.string.must_be_0_to_23)
                     else -> null
                 }
             }
@@ -651,9 +733,9 @@ private fun CommuteTimeInput(
             val endError = remember(endHour) {
                 val hour = endHour.toIntOrNull()
                 when {
-                    endHour.isBlank() -> "Required"
-                    hour == null -> "Invalid number"
-                    hour < 0 || hour > 23 -> "Must be 0-23"
+                    endHour.isBlank() -> context.getString(R.string.required)
+                    hour == null -> context.getString(R.string.invalid_number)
+                    hour < 0 || hour > 23 -> context.getString(R.string.must_be_0_to_23)
                     else -> null
                 }
             }
@@ -661,7 +743,7 @@ private fun CommuteTimeInput(
             OutlinedTextField(
                 value = startHour,
                 onValueChange = onStartChange,
-                label = { Text("Start Hour") },
+                label = { Text(stringResource(R.string.start_hour)) },
                 modifier = Modifier.weight(1f),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 singleLine = true,
@@ -671,7 +753,7 @@ private fun CommuteTimeInput(
             OutlinedTextField(
                 value = endHour,
                 onValueChange = onEndChange,
-                label = { Text("End Hour") },
+                label = { Text(stringResource(R.string.end_hour)) },
                 modifier = Modifier.weight(1f),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 singleLine = true,
@@ -689,11 +771,12 @@ private fun TemperatureThresholdInput(
     onValueChange: (String) -> Unit,
     description: String
 ) {
+    val context = LocalContext.current
     val error = remember(value) {
         val temp = value.toDoubleOrNull()
         when {
-            value.isBlank() -> "Required"
-            temp == null -> "Invalid number"
+            value.isBlank() -> context.getString(R.string.required)
+            temp == null -> context.getString(R.string.invalid_number)
             else -> null
         }
     }
@@ -701,7 +784,7 @@ private fun TemperatureThresholdInput(
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
-        label = { Text("$label (> °C)") },
+        label = { Text(stringResource(R.string.temperature_threshold_label, label)) },
         modifier = Modifier.fillMaxWidth(),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
         singleLine = true,
@@ -724,8 +807,9 @@ private fun ClothingMessageInput(
     threshold: Double,
     isLast: Boolean = false
 ) {
+    val context = LocalContext.current
     val error = remember(value) {
-        if (value.isBlank()) "Message cannot be empty" else null
+        if (value.isBlank()) context.getString(R.string.message_cannot_be_empty) else null
     }
     
     OutlinedTextField(
@@ -734,9 +818,9 @@ private fun ClothingMessageInput(
         label = {
             Text(
                 if (isLast) {
-                    "Level $level (< ${threshold}°C)"
+                    stringResource(R.string.clothing_level_label_last, level, threshold)
                 } else {
-                    "Level $level (> ${threshold}°C)"
+                    stringResource(R.string.clothing_level_label, level, threshold)
                 }
             )
         },
@@ -794,7 +878,7 @@ private fun ErrorCard(
                 modifier = Modifier.weight(1f)
             )
             TextButton(onClick = onDismiss) {
-                Text("Dismiss")
+                Text(stringResource(R.string.dismiss))
             }
         }
     }

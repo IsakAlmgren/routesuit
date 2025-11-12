@@ -1,10 +1,12 @@
 package se.isakalmgren.leaveprepared
 
+import android.content.Context
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 data class WeatherRecommendation(
     val needsRainClothes: Boolean,
@@ -63,9 +65,10 @@ fun getClothingMessage(level: ClothingLevel, config: AppConfig): String {
  * 
  * @param recommendation The weather recommendation to generate a message for
  * @param config The app configuration containing thresholds and clothing messages
+ * @param context The context to access string resources
  * @return The formatted recommendation message
  */
-fun generateRecommendationMessage(recommendation: WeatherRecommendation, config: AppConfig): String {
+fun generateRecommendationMessage(recommendation: WeatherRecommendation, config: AppConfig, context: Context): String {
     val clothingMessage = getClothingMessage(recommendation.clothingLevel, config)
     
     return buildString {
@@ -74,21 +77,20 @@ fun generateRecommendationMessage(recommendation: WeatherRecommendation, config:
             if (recommendation.rainForLater) {
                 // Rain for later case - use the recommendation's precipitation values
                 // (which should be set to the evening commute's values)
-                append("\n🌧️ Bring rain clothes for later! ")
-                append("Rain expected on your way home (${recommendation.precipitationProbability.toInt()}% chance, ")
-                append("${String.format("%.1f", recommendation.precipitationAmount)} mm)")
+                append(context.getString(R.string.bring_rain_clothes_for_later_message))
+                append(context.getString(R.string.rain_expected_home, recommendation.precipitationProbability.toInt(), recommendation.precipitationAmount))
             } else {
                 // Normal rain case
-                append("\n🌧️ Bring rain clothes! ")
+                append(context.getString(R.string.bring_rain_clothes_message))
                 if (recommendation.precipitationProbability > config.precipitationProbabilityThreshold) {
-                    append("Precipitation probability: ${recommendation.precipitationProbability.toInt()}%")
+                    append(context.getString(R.string.precipitation_probability, recommendation.precipitationProbability.toInt()))
                 }
                 if (recommendation.precipitationAmount > config.precipitationAmountThreshold) {
-                    append(" Expected precipitation: ${String.format("%.1f", recommendation.precipitationAmount)} mm")
+                    append(" " + context.getString(R.string.expected_precipitation, recommendation.precipitationAmount))
                 }
             }
         } else {
-            append("\n☀️ No rain expected")
+            append(context.getString(R.string.no_rain_expected_message))
         }
     }
 }
@@ -103,18 +105,20 @@ fun parseTime(timeString: String, config: AppConfig): ZonedDateTime? {
     }
 }
 
-fun getDayLabel(date: LocalDate, currentDate: LocalDate): String {
+fun getDayLabel(date: LocalDate, currentDate: LocalDate, context: Context): String {
     return when {
-        date == currentDate -> "Today"
-        date == currentDate.plusDays(1) -> "Tomorrow"
+        date == currentDate -> context.getString(R.string.today)
+        date == currentDate.plusDays(1) -> context.getString(R.string.tomorrow)
         else -> {
-            val formatter = DateTimeFormatter.ofPattern("EEEE, MMM d")
+            val formatter = DateTimeFormatter.ofPattern("EEEE, MMM d", Locale.getDefault())
             date.format(formatter)
         }
     }
 }
 
-fun formatHourForDisplay(hour24: Int): String {
+fun formatHourForDisplay(hour24: Int, context: Context): String {
+    // For now, keep the AM/PM format as is since it's standard
+    // If needed, we can add 24-hour format support later
     return when {
         hour24 == 0 -> "12 AM"
         hour24 < 12 -> "$hour24 AM"
@@ -128,7 +132,8 @@ fun analyzeWeatherForCommute(
     startHour: Int,
     endHour: Int,
     commuteName: String,
-    config: AppConfig
+    config: AppConfig,
+    context: Context
 ): WeatherRecommendation? {
     val now = ZonedDateTime.now(config.timezone)
     val currentDate = now.toLocalDate()
@@ -171,7 +176,7 @@ fun analyzeWeatherForCommute(
     
     val clothingLevel = getClothingLevel(avgTemperature, config)
     
-    val dayLabel = getDayLabel(commuteDate, currentDate)
+    val dayLabel = getDayLabel(commuteDate, currentDate, context)
     
     val recommendation = WeatherRecommendation(
         needsRainClothes = needsRainClothes,
@@ -186,40 +191,42 @@ fun analyzeWeatherForCommute(
         rainForLater = false
     )
     
-    return recommendation.copy(message = generateRecommendationMessage(recommendation, config))
+    return recommendation.copy(message = generateRecommendationMessage(recommendation, config, context))
 }
 
-fun analyzeWeatherForCommutes(timeSeries: List<TimeSeries>, config: AppConfig): CommuteRecommendations {
+fun analyzeWeatherForCommutes(timeSeries: List<TimeSeries>, config: AppConfig, context: Context): CommuteRecommendations {
     val now = ZonedDateTime.now(config.timezone)
     val currentHour = now.hour
     
     // Morning commute: using config timespan
     // Only show if the morning window hasn't passed today
     val morningCommuteRaw = if (currentHour < config.morningCommuteEndHour) {
-        val startDisplay = formatHourForDisplay(config.morningCommuteStartHour)
-        val endDisplay = formatHourForDisplay(config.morningCommuteEndHour)
-        val commuteName = "Morning Commute ($startDisplay-$endDisplay)"
+        val startDisplay = formatHourForDisplay(config.morningCommuteStartHour, context)
+        val endDisplay = formatHourForDisplay(config.morningCommuteEndHour, context)
+        val commuteName = context.getString(R.string.morning_commute_time, startDisplay, endDisplay)
         analyzeWeatherForCommute(
             timeSeries, 
             config.morningCommuteStartHour, 
             config.morningCommuteEndHour, 
             commuteName,
-            config
+            config,
+            context
         )
     } else {
         null
     }
     
     // Evening commute: using config timespan
-    val eveningStartDisplay = formatHourForDisplay(config.eveningCommuteStartHour)
-    val eveningEndDisplay = formatHourForDisplay(config.eveningCommuteEndHour)
-    val eveningCommuteName = "Evening Commute ($eveningStartDisplay-$eveningEndDisplay)"
+    val eveningStartDisplay = formatHourForDisplay(config.eveningCommuteStartHour, context)
+    val eveningEndDisplay = formatHourForDisplay(config.eveningCommuteEndHour, context)
+    val eveningCommuteName = context.getString(R.string.evening_commute_time, eveningStartDisplay, eveningEndDisplay)
     val eveningCommute = analyzeWeatherForCommute(
         timeSeries, 
         config.eveningCommuteStartHour, 
         config.eveningCommuteEndHour, 
         eveningCommuteName,
-        config
+        config,
+        context
     )
     
     // If evening commute needs rain clothes, morning commute should also recommend bringing them
@@ -233,7 +240,7 @@ fun analyzeWeatherForCommutes(timeSeries: List<TimeSeries>, config: AppConfig): 
             precipitationAmount = eveningCommute.precipitationAmount,
             message = "" // Will be generated below
         )
-        updatedRecommendation.copy(message = generateRecommendationMessage(updatedRecommendation, config))
+        updatedRecommendation.copy(message = generateRecommendationMessage(updatedRecommendation, config, context))
     } else {
         morningCommuteRaw
     }

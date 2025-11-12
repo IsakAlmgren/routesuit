@@ -1,3 +1,138 @@
 <resources>
     <string name="app_name">Leave Prepared</string>
+    
+    <!-- Screen Titles -->
+    <string name="settings">Settings</string>
+    <string name="weather">Weather</string>
+    
+    <!-- Buttons -->
+    <string name="save_changes">Save Changes</string>
+    <string name="reset">Reset</string>
+    <string name="cancel">Cancel</string>
+    <string name="refresh">Refresh</string>
+    <string name="retry">Retry</string>
+    <string name="dismiss">Dismiss</string>
+    <string name="discard">Discard</string>
+    <string name="back">Back</string>
+    
+    <!-- Settings Messages -->
+    <string name="settings_saved_successfully">Settings saved successfully!</string>
+    <string name="you_have_unsaved_changes">You have unsaved changes</string>
+    <string name="failed_to_save_settings">Failed to save settings: %1$s</string>
+    
+    <!-- Location Section -->
+    <string name="location">Location</string>
+    <string name="location_subtitle">Set the location for weather forecasts</string>
+    <string name="longitude">Longitude</string>
+    <string name="latitude">Latitude</string>
+    <string name="longitude_hint">Longitude (-180 to 180)</string>
+    <string name="latitude_hint">Latitude (-90 to 90)</string>
+    <string name="get_current_location">Get Current Location</string>
+    <string name="getting_location">Getting Location…</string>
+    <string name="could_not_get_location">Could not get current location. Please try again or enter coordinates manually.</string>
+    <string name="error_getting_location">Error getting location: %1$s</string>
+    <string name="location_permission_denied">Location permission denied. Please grant location permission or enter coordinates manually.</string>
+    
+    <!-- Commute Times Section -->
+    <string name="commute_times">Commute Times</string>
+    <string name="commute_times_subtitle">24-hour format (0-23)</string>
+    <string name="morning_commute">Morning Commute</string>
+    <string name="evening_commute">Evening Commute</string>
+    <string name="start_hour">Start Hour</string>
+    <string name="end_hour">End Hour</string>
+    
+    <!-- Temperature Thresholds Section -->
+    <string name="temperature_thresholds">Temperature Thresholds</string>
+    <string name="temperature_thresholds_subtitle">Temperature in °C for clothing recommendations</string>
+    <string name="very_light">Very Light</string>
+    <string name="light">Light</string>
+    <string name="moderate">Moderate</string>
+    <string name="cool">Cool</string>
+    <string name="cold">Cold</string>
+    <string name="very_cold">Very Cold</string>
+    <string name="temperature_threshold_label">%1$s (> °C)</string>
+    <string name="very_light_description">Shorts and t-shirt weather</string>
+    <string name="light_description">T-shirt with light jacket</string>
+    <string name="moderate_description">Long sleeves and light jacket</string>
+    <string name="cool_description">Sweater and jacket recommended</string>
+    <string name="cold_description">Heavy jacket and layers needed</string>
+    <string name="very_cold_description">Winter coat and warm layers</string>
+    
+    <!-- Precipitation Thresholds Section -->
+    <string name="precipitation_thresholds">Precipitation Thresholds</string>
+    <string name="precipitation_thresholds_subtitle">When to recommend rain clothes</string>
+    <string name="probability_threshold_percent">Probability Threshold (%)</string>
+    <string name="amount_threshold_mm">Amount Threshold (mm)</string>
+    <string name="probability_threshold_hint">Minimum probability to recommend rain clothes</string>
+    <string name="amount_threshold_hint">Minimum expected precipitation amount</string>
+    
+    <!-- Clothing Messages Section -->
+    <string name="clothing_messages">Clothing Messages</string>
+    <string name="clothing_messages_subtitle">Customize messages for each clothing level</string>
+    <string name="clothing_level_label">Level %1$d (> %2$.1f°C)</string>
+    <string name="clothing_level_label_last">Level %1$d (&lt; %2$.1f°C)</string>
+    <string name="message_cannot_be_empty">Message cannot be empty</string>
+    
+    <!-- Validation Messages -->
+    <string name="required">Required</string>
+    <string name="invalid_number">Invalid number</string>
+    <string name="must_be_between">Must be between %1$s and %2$s</string>
+    <string name="must_be_0_to_23">Must be 0-23</string>
+    <string name="must_be_0_to_100">Must be 0-100</string>
+    <string name="must_be_positive">Must be positive</string>
+    
+    <!-- Dialogs -->
+    <string name="reset_to_defaults">Reset to Defaults</string>
+    <string name="reset_confirmation">Are you sure you want to reset all settings to their default values? This cannot be undone.</string>
+    <string name="unsaved_changes">Unsaved Changes</string>
+    <string name="unsaved_changes_message">You have unsaved changes. Are you sure you want to leave? Your changes will be lost.</string>
+    
+    <!-- Weather Screen -->
+    <string name="loading_weather_forecast">Loading weather forecast…</string>
+    <string name="to_work">To Work</string>
+    <string name="from_work">From Work</string>
+    <string name="no_commute_data">No commute data available for today</string>
+    <string name="error">Error</string>
+    <string name="failed_to_fetch_weather">Failed to fetch weather: %1$s</string>
+    
+    <!-- Weather Recommendation Cards -->
+    <string name="clothing_recommendation">Clothing Recommendation</string>
+    <string name="bring_rain_clothes">🌧️ Rain Clothes Needed!</string>
+    <string name="bring_rain_clothes_later">🌧️ Bring Rain Clothes for Later!</string>
+    <string name="rain_expected_later">Rain expected on your way home</string>
+    <string name="precipitation_probability">Precipitation probability: %1$d%%</string>
+    <string name="expected_precipitation">Expected: %1$.1f mm</string>
+    <string name="no_rain_expected">☀️ No Rain Expected</string>
+    <string name="skip_rain_gear">You can skip the rain gear today</string>
+    <string name="bring_rain_clothes_message">🌧️ Bring rain clothes! </string>
+    <string name="bring_rain_clothes_for_later_message">🌧️ Bring rain clothes for later! </string>
+    <string name="rain_expected_home">Rain expected on your way home (%1$d%% chance, %2$.1f mm)</string>
+    <string name="no_rain_expected_message">\n☀️ No rain expected</string>
+    
+    <!-- Notifications -->
+    <string name="notification_channel_name">Weather Forecast</string>
+    <string name="bring_rain_clothes_today">🌧️ Bring Rain Clothes Today!</string>
+    <string name="weather_update">☀️ Weather Update</string>
+    <string name="notification_to_work">🌅 To Work: </string>
+    <string name="notification_from_work">🌆 From Work: </string>
+    <string name="notification_bring_rain_gear_later"> 🌧️ Bring rain gear for later!</string>
+    <string name="notification_rain_clothes_needed"> 🌧️ Rain clothes needed</string>
+    <string name="temperature_format">%1$.1f°C</string>
+    
+    <!-- Date/Time Labels -->
+    <string name="today">Today</string>
+    <string name="tomorrow">Tomorrow</string>
+    <string name="morning_commute_time">Morning Commute (%1$s-%2$s)</string>
+    <string name="evening_commute_time">Evening Commute (%1$s-%2$s)</string>
+    
+    <!-- Language Settings -->
+    <string name="language">Language</string>
+    <string name="language_subtitle">Choose your preferred language</string>
+    <string name="language_auto">Auto (System Default)</string>
+    <string name="language_english">English</string>
+    <string name="language_swedish">Swedish</string>
+    
+    <!-- Content Descriptions -->
+    <string name="content_description_app_icon">App Icon</string>
+    <string name="content_description_settings">Settings</string>
 </resources>

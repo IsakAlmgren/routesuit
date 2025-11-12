@@ -30,7 +30,7 @@ class WeatherNotificationWorker(
                 longitude = lonStr,
                 latitude = latStr
             )
-            val recommendations = analyzeWeatherForCommutes(response.timeSeries, appConfig)
+            val recommendations = analyzeWeatherForCommutes(response.timeSeries, appConfig, applicationContext)
             
             sendNotification(recommendations)
             
@@ -51,7 +51,7 @@ class WeatherNotificationWorker(
         
         // Create notification channel for Android O and above
         val channelId = "weather_forecast_channel"
-        val channelName = "Weather Forecast"
+        val channelName = applicationContext.getString(R.string.notification_channel_name)
         val importance = NotificationManager.IMPORTANCE_DEFAULT
         val channel = NotificationChannel(channelId, channelName, importance)
         notificationManager.createNotificationChannel(channel)
@@ -59,13 +59,13 @@ class WeatherNotificationWorker(
         // Build notification message with both commutes
         val message = buildString {
             if (recommendations.morningCommute != null) {
-                append("🌅 To Work: ")
-                append("${String.format("%.1f", recommendations.morningCommute.temperature)}°C")
+                append(applicationContext.getString(R.string.notification_to_work))
+                append(applicationContext.getString(R.string.temperature_format, recommendations.morningCommute.temperature))
                 if (recommendations.morningCommute.needsRainClothes) {
                     if (recommendations.morningCommute.rainForLater) {
-                        append(" 🌧️ Bring rain gear for later!")
+                        append(applicationContext.getString(R.string.notification_bring_rain_gear_later))
                     } else {
-                        append(" 🌧️ Rain clothes needed")
+                        append(applicationContext.getString(R.string.notification_rain_clothes_needed))
                     }
                 }
                 if (recommendations.eveningCommute != null) {
@@ -73,10 +73,10 @@ class WeatherNotificationWorker(
                 }
             }
             if (recommendations.eveningCommute != null) {
-                append("🌆 From Work: ")
-                append("${String.format("%.1f", recommendations.eveningCommute.temperature)}°C")
+                append(applicationContext.getString(R.string.notification_from_work))
+                append(applicationContext.getString(R.string.temperature_format, recommendations.eveningCommute.temperature))
                 if (recommendations.eveningCommute.needsRainClothes) {
-                    append(" 🌧️ Rain clothes needed")
+                    append(applicationContext.getString(R.string.notification_rain_clothes_needed))
                 }
             }
         }
@@ -86,9 +86,9 @@ class WeatherNotificationWorker(
                                recommendations.eveningCommute?.needsRainClothes == true
         
         val title = if (needsRainClothes) {
-            "🌧️ Bring Rain Clothes Today!"
+            applicationContext.getString(R.string.bring_rain_clothes_today)
         } else {
-            "☀️ Weather Update"
+            applicationContext.getString(R.string.weather_update)
         }
         
         val notification = NotificationCompat.Builder(applicationContext, channelId)

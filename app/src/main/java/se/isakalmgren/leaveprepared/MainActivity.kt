@@ -18,6 +18,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import se.isakalmgren.leaveprepared.ui.theme.LeavePreparedTheme
+import android.content.Context
+import android.content.res.Configuration
 
 class MainActivity : ComponentActivity() {
     private val requestNotificationPermissionLauncher = registerForActivityResult(
@@ -26,6 +28,24 @@ class MainActivity : ComponentActivity() {
         if (isGranted) {
             NotificationScheduler.scheduleDailyNotification(this)
         }
+    }
+    
+    override fun attachBaseContext(newBase: Context) {
+        // Apply locale before creating the context
+        val languageRepository = LanguageRepository(newBase)
+        val locale = languageRepository.getCurrentLocale()
+        val config = Configuration(newBase.resources.configuration)
+        config.setLocale(locale)
+        
+        val context = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            newBase.createConfigurationContext(config)
+        } else {
+            @Suppress("DEPRECATION")
+            newBase.resources.updateConfiguration(config, newBase.resources.displayMetrics)
+            newBase
+        }
+        
+        super.attachBaseContext(context)
     }
     
     override fun onCreate(savedInstanceState: Bundle?) {

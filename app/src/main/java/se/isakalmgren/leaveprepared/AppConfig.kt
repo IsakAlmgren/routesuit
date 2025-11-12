@@ -42,5 +42,33 @@ data class AppConfig(
     // Always use the system default timezone
     val timezone: ZoneId
         get() = ZoneId.systemDefault()
+    
+    companion object {
+        /**
+         * Get default clothing messages for a given language code
+         */
+        fun getDefaultClothingMessages(languageCode: String): Map<Int, String> {
+            return when (languageCode.lowercase()) {
+                "sv" -> mapOf(
+                    1 to "Shorts och t-shirt",
+                    2 to "T-shirt med lätt jacka",
+                    3 to "Långärmat och lätt jacka",
+                    4 to "Tröja och jacka",
+                    5 to "Tjock jacka och lager",
+                    6 to "Vinterjacka och varma lager viktigt",
+                    7 to "Tung vinterutrustning krävs"
+                )
+                else -> mapOf(
+                    1 to "Shorts and t-shirt",
+                    2 to "T-shirt with a light jacket",
+                    3 to "Long sleeves and a light jacket",
+                    4 to "Sweater and jacket",
+                    5 to "Heavy jacket and layers",
+                    6 to "Winter coat and warm layers essential",
+                    7 to "Heavy winter gear required"
+                )
+            }
+        }
+    }
 }
 

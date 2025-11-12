@@ -6,8 +6,12 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 val appModule = module {
+    single<LanguageRepository> {
+        LanguageRepository(androidContext())
+    }
+    
     single<ConfigRepository> {
-        ConfigRepository(androidContext())
+        ConfigRepository(androidContext(), get())
     }
     
     single<AppConfig> {

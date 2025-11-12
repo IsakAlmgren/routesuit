@@ -1,0 +1,138 @@
+<resources>
+    <string name="app_name">Lämna Förberedd</string>
+    
+    <!-- Screen Titles -->
+    <string name="settings">Inställningar</string>
+    <string name="weather">Väder</string>
+    
+    <!-- Buttons -->
+    <string name="save_changes">Spara ändringar</string>
+    <string name="reset">Återställ</string>
+    <string name="cancel">Avbryt</string>
+    <string name="refresh">Uppdatera</string>
+    <string name="retry">Försök igen</string>
+    <string name="dismiss">Stäng</string>
+    <string name="discard">Kasta</string>
+    <string name="back">Tillbaka</string>
+    
+    <!-- Settings Messages -->
+    <string name="settings_saved_successfully">Inställningar sparade!</string>
+    <string name="you_have_unsaved_changes">Du har osparade ändringar</string>
+    <string name="failed_to_save_settings">Kunde inte spara inställningar: %1$s</string>
+    
+    <!-- Location Section -->
+    <string name="location">Plats</string>
+    <string name="location_subtitle">Ange platsen för väderprognoser</string>
+    <string name="longitude">Longitud</string>
+    <string name="latitude">Latitud</string>
+    <string name="longitude_hint">Longitud (-180 till 180)</string>
+    <string name="latitude_hint">Latitud (-90 till 90)</string>
+    <string name="get_current_location">Hämta nuvarande plats</string>
+    <string name="getting_location">Hämtar plats…</string>
+    <string name="could_not_get_location">Kunde inte hämta nuvarande plats. Försök igen eller ange koordinater manuellt.</string>
+    <string name="error_getting_location">Fel vid hämtning av plats: %1$s</string>
+    <string name="location_permission_denied">Platsbehörighet nekad. Ge platsbehörighet eller ange koordinater manuellt.</string>
+    
+    <!-- Commute Times Section -->
+    <string name="commute_times">Pendlingstider</string>
+    <string name="commute_times_subtitle">24-timmarsformat (0-23)</string>
+    <string name="morning_commute">Morgonpendling</string>
+    <string name="evening_commute">Kvällspendling</string>
+    <string name="start_hour">Starttimme</string>
+    <string name="end_hour">Sluttimme</string>
+    
+    <!-- Temperature Thresholds Section -->
+    <string name="temperature_thresholds">Temperaturtrösklar</string>
+    <string name="temperature_thresholds_subtitle">Temperatur i °C för klädrekommendationer</string>
+    <string name="very_light">Mycket lätt</string>
+    <string name="light">Lätt</string>
+    <string name="moderate">Måttlig</string>
+    <string name="cool">Sval</string>
+    <string name="cold">Kall</string>
+    <string name="very_cold">Mycket kall</string>
+    <string name="temperature_threshold_label">%1$s (> °C)</string>
+    <string name="very_light_description">Shorts och t-shirt väder</string>
+    <string name="light_description">T-shirt med lätt jacka</string>
+    <string name="moderate_description">Långärmat och lätt jacka</string>
+    <string name="cool_description">Tröja och jacka rekommenderas</string>
+    <string name="cold_description">Tjock jacka och lager behövs</string>
+    <string name="very_cold_description">Vinterjacka och varma lager</string>
+    
+    <!-- Precipitation Thresholds Section -->
+    <string name="precipitation_thresholds">Nederbördströsklar</string>
+    <string name="precipitation_thresholds_subtitle">När regnkläder ska rekommenderas</string>
+    <string name="probability_threshold_percent">Sannolikhetströskel (%)</string>
+    <string name="amount_threshold_mm">Mängdtröskel (mm)</string>
+    <string name="probability_threshold_hint">Minimal sannolikhet för att rekommendera regnkläder</string>
+    <string name="amount_threshold_hint">Minimal förväntad nederbörd</string>
+    
+    <!-- Clothing Messages Section -->
+    <string name="clothing_messages">Klädmeddelanden</string>
+    <string name="clothing_messages_subtitle">Anpassa meddelanden för varje klädnivå</string>
+    <string name="clothing_level_label">Nivå %1$d (> %2$.1f°C)</string>
+    <string name="clothing_level_label_last">Nivå %1$d (&lt; %2$.1f°C)</string>
+    <string name="message_cannot_be_empty">Meddelandet kan inte vara tomt</string>
+    
+    <!-- Validation Messages -->
+    <string name="required">Obligatoriskt</string>
+    <string name="invalid_number">Ogiltigt nummer</string>
+    <string name="must_be_between">Måste vara mellan %1$s och %2$s</string>
+    <string name="must_be_0_to_23">Måste vara 0-23</string>
+    <string name="must_be_0_to_100">Måste vara 0-100</string>
+    <string name="must_be_positive">Måste vara positivt</string>
+    
+    <!-- Dialogs -->
+    <string name="reset_to_defaults">Återställ till standard</string>
+    <string name="reset_confirmation">Är du säker på att du vill återställa alla inställningar till standardvärden? Detta kan inte ångras.</string>
+    <string name="unsaved_changes">Osparade ändringar</string>
+    <string name="unsaved_changes_message">Du har osparade ändringar. Är du säker på att du vill lämna? Dina ändringar kommer att förloras.</string>
+    
+    <!-- Weather Screen -->
+    <string name="loading_weather_forecast">Laddar väderprognos…</string>
+    <string name="to_work">Till jobbet</string>
+    <string name="from_work">Från jobbet</string>
+    <string name="no_commute_data">Ingen pendlingsdata tillgänglig för idag</string>
+    <string name="error">Fel</string>
+    <string name="failed_to_fetch_weather">Kunde inte hämta väder: %1$s</string>
+    
+    <!-- Weather Recommendation Cards -->
+    <string name="clothing_recommendation">Klädrekommendation</string>
+    <string name="bring_rain_clothes">🌧️ Regnkläder behövs!</string>
+    <string name="bring_rain_clothes_later">🌧️ Ta med regnkläder för senare!</string>
+    <string name="rain_expected_later">Regn förväntas på vägen hem</string>
+    <string name="precipitation_probability">Nedbördsannolikhet: %1$d%%</string>
+    <string name="expected_precipitation">Förväntat: %1$.1f mm</string>
+    <string name="no_rain_expected">☀️ Inget regn förväntas</string>
+    <string name="skip_rain_gear">Du kan hoppa över regnkläderna idag</string>
+    <string name="bring_rain_clothes_message">🌧️ Ta med regnkläder! </string>
+    <string name="bring_rain_clothes_for_later_message">🌧️ Ta med regnkläder för senare! </string>
+    <string name="rain_expected_home">Regn förväntas på vägen hem (%1$d%% chans, %2$.1f mm)</string>
+    <string name="no_rain_expected_message">\n☀️ Inget regn förväntas</string>
+    
+    <!-- Notifications -->
+    <string name="notification_channel_name">Väderprognos</string>
+    <string name="bring_rain_clothes_today">🌧️ Ta med regnkläder idag!</string>
+    <string name="weather_update">☀️ Väderuppdatering</string>
+    <string name="notification_to_work">🌅 Till jobbet: </string>
+    <string name="notification_from_work">🌆 Från jobbet: </string>
+    <string name="notification_bring_rain_gear_later"> 🌧️ Ta med regnkläder för senare!</string>
+    <string name="notification_rain_clothes_needed"> 🌧️ Regnkläder behövs</string>
+    <string name="temperature_format">%1$.1f°C</string>
+    
+    <!-- Date/Time Labels -->
+    <string name="today">Idag</string>
+    <string name="tomorrow">Imorgon</string>
+    <string name="morning_commute_time">Morgonpendling (%1$s-%2$s)</string>
+    <string name="evening_commute_time">Kvällspendling (%1$s-%2$s)</string>
+    
+    <!-- Language Settings -->
+    <string name="language">Språk</string>
+    <string name="language_subtitle">Välj ditt föredragna språk</string>
+    <string name="language_auto">Auto (Systemstandard)</string>
+    <string name="language_english">Engelska</string>
+    <string name="language_swedish">Svenska</string>
+    
+    <!-- Content Descriptions -->
+    <string name="content_description_app_icon">Appikon</string>
+    <string name="content_description_settings">Inställningar</string>
+</resources>
