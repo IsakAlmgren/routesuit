@@ -33,6 +33,7 @@ sealed class WeatherUiState {
     data class Error(val message: String) : WeatherUiState()
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WeatherScreen(
     apiService: SmhiApiService = koinInject(),
@@ -63,57 +64,88 @@ fun WeatherScreen(
         fetchWeather()
     }
     
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(16.dp)
-            .verticalScroll(rememberScrollState()),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        WeatherScreenHeader(onSettingsClick = onSettingsClick)
-        
-        when (val state = uiState) {
-            is WeatherUiState.Loading -> {
-                CircularProgressIndicator()
-                Text("Loading weather forecast...")
-            }
-            
-            is WeatherUiState.Success -> {
-                if (state.recommendations.morningCommute != null) {
-                    WeatherRecommendationCard(
-                        recommendation = state.recommendations.morningCommute,
-                        title = "To Work",
-                        appConfig = appConfig
+    Scaffold(
+        modifier = modifier,
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "Leave Prepared",
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                        letterSpacing = 0.5.sp,
+                        modifier = Modifier
+                            .padding(start = 16.dp)
+                            .offset(y = (-8).dp)
                     )
-                }
-                
-                if (state.recommendations.eveningCommute != null) {
-                    WeatherRecommendationCard(
-                        recommendation = state.recommendations.eveningCommute,
-                        title = "From Work",
-                        appConfig = appConfig
-
-                    )
-                }
-                
-                if (state.recommendations.morningCommute == null && state.recommendations.eveningCommute == null) {
-                    NoCommuteDataCard()
-                }
-                
-                Button(
-                    onClick = { fetchWeather() },
-                    modifier = Modifier.padding(top = 8.dp)
-                ) {
-                    Text("Refresh")
-                }
-            }
-            
-            is WeatherUiState.Error -> {
-                ErrorCard(
-                    message = state.message,
-                    onRetry = { fetchWeather() }
+                },
+                actions = {
+                    IconButton(onClick = onSettingsClick) {
+                        Icon(
+                            imageVector = Icons.Filled.Settings,
+                            contentDescription = "Settings",
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface
                 )
+            )
+        }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            when (val state = uiState) {
+                is WeatherUiState.Loading -> {
+                    CircularProgressIndicator()
+                    Text("Loading weather forecast...")
+                }
+                
+                is WeatherUiState.Success -> {
+                    if (state.recommendations.morningCommute != null) {
+                        WeatherRecommendationCard(
+                            recommendation = state.recommendations.morningCommute,
+                            title = "To Work",
+                            appConfig = appConfig
+                        )
+                    }
+                    
+                    if (state.recommendations.eveningCommute != null) {
+                        WeatherRecommendationCard(
+                            recommendation = state.recommendations.eveningCommute,
+                            title = "From Work",
+                            appConfig = appConfig
+
+                        )
+                    }
+                    
+                    if (state.recommendations.morningCommute == null && state.recommendations.eveningCommute == null) {
+                        NoCommuteDataCard()
+                    }
+                    
+                    Button(
+                        onClick = { fetchWeather() },
+                        modifier = Modifier.padding(top = 8.dp)
+                    ) {
+                        Text("Refresh")
+                    }
+                }
+                
+                is WeatherUiState.Error -> {
+                    ErrorCard(
+                        message = state.message,
+                        onRetry = { fetchWeather() }
+                    )
+                }
             }
         }
     }
@@ -278,33 +310,6 @@ private fun InfoCard(
     }
 }
 
-@Composable
-private fun WeatherScreenHeader(onSettingsClick: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = "Leave Prepared",
-            fontSize = 32.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(vertical = 16.dp)
-        )
-        IconButton(
-            onClick = onSettingsClick,
-            modifier = Modifier.padding(8.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Filled.Settings,
-                contentDescription = "Settings",
-                tint = MaterialTheme.colorScheme.onSurface
-            )
-        }
-    }
-}
 
 @Composable
 private fun ErrorCard(message: String, onRetry: () -> Unit) {
@@ -494,8 +499,6 @@ fun WeatherScreenPreview_Success() {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                WeatherScreenHeader(onSettingsClick = {})
-                
                 val morningRecommendationBase = WeatherRecommendation(
                     needsRainClothes = true,
                     clothingLevel = ClothingLevel.LEVEL_4,
@@ -557,8 +560,6 @@ fun WeatherScreenPreview_Loading() {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                WeatherScreenHeader(onSettingsClick = {})
-                
                 CircularProgressIndicator()
                 Text("Loading weather forecast...")
             }
@@ -578,8 +579,6 @@ fun WeatherScreenPreview_Error() {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                WeatherScreenHeader(onSettingsClick = {})
-                
                 ErrorCard(
                     message = "Failed to fetch weather: Network error",
                     onRetry = { }
