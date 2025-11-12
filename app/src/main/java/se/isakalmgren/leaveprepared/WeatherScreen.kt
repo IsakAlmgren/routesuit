@@ -70,30 +70,7 @@ fun WeatherScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Leave Prepared",
-                fontSize = 32.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(vertical = 16.dp)
-            )
-            IconButton(
-                onClick = onSettingsClick,
-                modifier = Modifier.padding(8.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Settings,
-                    contentDescription = "Settings",
-                    tint = MaterialTheme.colorScheme.onSurface
-                )
-            }
-        }
+        WeatherScreenHeader(onSettingsClick = onSettingsClick)
         
         when (val state = uiState) {
             is WeatherUiState.Loading -> {
@@ -120,18 +97,7 @@ fun WeatherScreen(
                 }
                 
                 if (state.recommendations.morningCommute == null && state.recommendations.eveningCommute == null) {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant
-                        )
-                    ) {
-                        Text(
-                            text = "No commute data available for today",
-                            modifier = Modifier.padding(16.dp),
-                            textAlign = TextAlign.Center
-                        )
-                    }
+                    NoCommuteDataCard()
                 }
                 
                 Button(
@@ -143,34 +109,10 @@ fun WeatherScreen(
             }
             
             is WeatherUiState.Error -> {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer
-                    )
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "Error",
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onErrorContainer
-                        )
-                        Text(
-                            text = state.message,
-                            color = MaterialTheme.colorScheme.onErrorContainer,
-                            modifier = Modifier.padding(top = 8.dp)
-                        )
-                        Button(
-                            onClick = { fetchWeather() },
-                            modifier = Modifier.padding(top = 16.dp)
-                        ) {
-                            Text("Retry")
-                        }
-                    }
-                }
+                ErrorCard(
+                    message = state.message,
+                    onRetry = { fetchWeather() }
+                )
             }
         }
     }
@@ -193,25 +135,7 @@ fun WeatherRecommendationCard(
         ) {
             // Title
             if (title.isNotEmpty()) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                ) {
-                    Text(
-                        text = title,
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    if (recommendation.dayLabel.isNotEmpty()) {
-                        Text(
-                            text = recommendation.dayLabel,
-                            fontSize = 16.sp,
-                            color = MaterialTheme.colorScheme.secondary,
-                            modifier = Modifier.padding(top = 4.dp)
-                        )
-                    }
-                }
+                RecommendationTitle(title = title, dayLabel = recommendation.dayLabel)
                 Divider()
             }
             
@@ -226,109 +150,209 @@ fun WeatherRecommendationCard(
             HorizontalDivider(Modifier, DividerDefaults.Thickness, DividerDefaults.color)
 
             // Clothing recommendation
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                )
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = "Clothing Recommendation",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                    Text(
-                        text = getClothingMessage(recommendation.clothingLevel, appConfig),
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(top = 8.dp),
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                }
-            }
+            ClothingRecommendationCard(
+                clothingMessage = getClothingMessage(recommendation.clothingLevel, appConfig)
+            )
             
             // Rain clothes recommendation
-            if (recommendation.needsRainClothes) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer
-                    )
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = if (recommendation.rainForLater) {
-                                "🌧️ Bring Rain Clothes for Later!"
-                            } else {
-                                "🌧️ Rain Clothes Needed!"
-                            },
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 20.sp,
-                            color = MaterialTheme.colorScheme.onErrorContainer
-                        )
-                        if (recommendation.rainForLater) {
-                            Text(
-                                text = "Rain expected on your way home",
-                                modifier = Modifier.padding(top = 8.dp),
-                                color = MaterialTheme.colorScheme.onErrorContainer,
-                                textAlign = TextAlign.Center
-                            )
-                        } else {
-                            Text(
-                                text = "Precipitation probability: ${recommendation.precipitationProbability.toInt()}%",
-                                modifier = Modifier.padding(top = 8.dp),
-                                color = MaterialTheme.colorScheme.onErrorContainer
-                            )
-                            if (recommendation.precipitationAmount > 0) {
-                                Text(
-                                    text = "Expected: ${String.format("%.1f", recommendation.precipitationAmount)} mm",
-                                    color = MaterialTheme.colorScheme.onErrorContainer
-                                )
-                            }
-                        }
-                    }
-                }
-            } else {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.tertiaryContainer
-                    )
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "☀️ No Rain Expected",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp,
-                            color = MaterialTheme.colorScheme.onTertiaryContainer
-                        )
-                        Text(
-                            text = "You can skip the rain gear today",
-                            modifier = Modifier.padding(top = 8.dp),
-                            color = MaterialTheme.colorScheme.onTertiaryContainer
-                        )
-                    }
-                }
-            }
-            
-            // Full message
+            RainRecommendationCard(recommendation = recommendation)
+        }
+    }
+}
+
+@Composable
+private fun RecommendationTitle(title: String, dayLabel: String) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.padding(bottom = 8.dp)
+    ) {
+        Text(
+            text = title,
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary
+        )
+        if (dayLabel.isNotEmpty()) {
             Text(
-                text = recommendation.message,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(top = 8.dp),
-                fontSize = 16.sp
+                text = dayLabel,
+                fontSize = 16.sp,
+                color = MaterialTheme.colorScheme.secondary,
+                modifier = Modifier.padding(top = 4.dp)
             )
         }
+    }
+}
+
+@Composable
+private fun ClothingRecommendationCard(clothingMessage: String) {
+    InfoCard(
+        containerColor = MaterialTheme.colorScheme.primaryContainer,
+        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+    ) {
+        Text(
+            text = "Clothing Recommendation",
+            fontWeight = FontWeight.Bold,
+            fontSize = 18.sp,
+            color = MaterialTheme.colorScheme.onPrimaryContainer
+        )
+        Text(
+            text = clothingMessage,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(top = 8.dp),
+            color = MaterialTheme.colorScheme.onPrimaryContainer
+        )
+    }
+}
+
+@Composable
+private fun RainRecommendationCard(recommendation: WeatherRecommendation) {
+    if (recommendation.needsRainClothes) {
+        InfoCard(
+            containerColor = MaterialTheme.colorScheme.errorContainer,
+            contentColor = MaterialTheme.colorScheme.onErrorContainer
+        ) {
+            Text(
+                text = if (recommendation.rainForLater) {
+                    "🌧️ Bring Rain Clothes for Later!"
+                } else {
+                    "🌧️ Rain Clothes Needed!"
+                },
+                fontWeight = FontWeight.Bold,
+                fontSize = 20.sp,
+                color = MaterialTheme.colorScheme.onErrorContainer
+            )
+            if (recommendation.rainForLater) {
+                Text(
+                    text = "Rain expected on your way home",
+                    modifier = Modifier.padding(top = 8.dp),
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                    textAlign = TextAlign.Center
+                )
+            } else {
+                Text(
+                    text = "Precipitation probability: ${recommendation.precipitationProbability.toInt()}%",
+                    modifier = Modifier.padding(top = 8.dp),
+                    color = MaterialTheme.colorScheme.onErrorContainer
+                )
+                if (recommendation.precipitationAmount > 0) {
+                    Text(
+                        text = "Expected: ${String.format("%.1f", recommendation.precipitationAmount)} mm",
+                        color = MaterialTheme.colorScheme.onErrorContainer
+                    )
+                }
+            }
+        }
+    } else {
+        InfoCard(
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+            contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+        ) {
+            Text(
+                text = "☀️ No Rain Expected",
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp,
+                color = MaterialTheme.colorScheme.onTertiaryContainer
+            )
+            Text(
+                text = "You can skip the rain gear today",
+                modifier = Modifier.padding(top = 8.dp),
+                color = MaterialTheme.colorScheme.onTertiaryContainer
+            )
+        }
+    }
+}
+
+@Composable
+private fun InfoCard(
+    containerColor: androidx.compose.ui.graphics.Color,
+    contentColor: androidx.compose.ui.graphics.Color,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = containerColor)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            content = content
+        )
+    }
+}
+
+@Composable
+private fun WeatherScreenHeader(onSettingsClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = "Leave Prepared",
+            fontSize = 32.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(vertical = 16.dp)
+        )
+        IconButton(
+            onClick = onSettingsClick,
+            modifier = Modifier.padding(8.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Settings,
+                contentDescription = "Settings",
+                tint = MaterialTheme.colorScheme.onSurface
+            )
+        }
+    }
+}
+
+@Composable
+private fun ErrorCard(message: String, onRetry: () -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "Error",
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onErrorContainer
+            )
+            Text(
+                text = message,
+                color = MaterialTheme.colorScheme.onErrorContainer,
+                modifier = Modifier.padding(top = 8.dp)
+            )
+            Button(
+                onClick = onRetry,
+                modifier = Modifier.padding(top = 16.dp)
+            ) {
+                Text("Retry")
+            }
+        }
+    }
+}
+
+@Composable
+private fun NoCommuteDataCard() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Text(
+            text = "No commute data available for today",
+            modifier = Modifier.padding(16.dp),
+            textAlign = TextAlign.Center
+        )
     }
 }
 
@@ -456,12 +480,7 @@ fun WeatherScreenPreview_Success() {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Text(
-                    text = "Leave Prepared",
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(vertical = 16.dp)
-                )
+                WeatherScreenHeader(onSettingsClick = {})
                 
                 WeatherRecommendationCard(
                     recommendation = WeatherRecommendation(
@@ -518,12 +537,7 @@ fun WeatherScreenPreview_Loading() {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Text(
-                    text = "Leave Prepared",
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(vertical = 16.dp)
-                )
+                WeatherScreenHeader(onSettingsClick = {})
                 
                 CircularProgressIndicator()
                 Text("Loading weather forecast...")
@@ -544,41 +558,12 @@ fun WeatherScreenPreview_Error() {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Text(
-                    text = "Leave Prepared",
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(vertical = 16.dp)
-                )
+                WeatherScreenHeader(onSettingsClick = {})
                 
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer
-                    )
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "Error",
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onErrorContainer
-                        )
-                        Text(
-                            text = "Failed to fetch weather: Network error",
-                            color = MaterialTheme.colorScheme.onErrorContainer,
-                            modifier = Modifier.padding(top = 8.dp)
-                        )
-                        Button(
-                            onClick = { },
-                            modifier = Modifier.padding(top = 16.dp)
-                        ) {
-                            Text("Retry")
-                        }
-                    }
-                }
+                ErrorCard(
+                    message = "Failed to fetch weather: Network error",
+                    onRetry = { }
+                )
             }
         }
     }
