@@ -141,14 +141,14 @@ fun WeatherRecommendationCard(
             }
             
             // Temperature display
-            InfoCard {
-                Text(
-                    text = "${String.format("%.1f", recommendation.temperature)}°C",
-                    fontSize = 48.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
+            Text(
+                text = "${String.format("%.1f", recommendation.temperature)}°C",
+                fontSize = 48.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
 
             // Clothing recommendation
             ClothingRecommendationCard(
