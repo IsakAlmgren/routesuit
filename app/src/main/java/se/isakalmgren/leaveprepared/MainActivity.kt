@@ -7,6 +7,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -45,7 +47,11 @@ class MainActivity : ComponentActivity() {
                     NavHost(
                         navController = navController,
                         startDestination = Screen.Weather.route,
-                        modifier = Modifier.padding(innerPadding)
+                        modifier = Modifier.padding(innerPadding),
+                        enterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(700))},
+                        exitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(700))},
+                        popEnterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(700))},
+                        popExitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(700))},
                     ) {
                         composable(Screen.Weather.route) {
                             WeatherScreen(
