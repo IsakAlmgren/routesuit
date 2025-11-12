@@ -10,11 +10,11 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import se.isakalmgren.leaveprepared.ui.theme.LeavePreparedTheme
 
 class MainActivity : ComponentActivity() {
@@ -39,19 +39,26 @@ class MainActivity : ComponentActivity() {
         
         setContent {
             LeavePreparedTheme {
-                var showSettings by remember { mutableStateOf(false) }
+                val navController = rememberNavController()
                 
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    if (showSettings) {
-                        SettingsScreen(
-                            onBack = { showSettings = false },
-                            modifier = Modifier.padding(innerPadding)
-                        )
-                    } else {
-                        WeatherScreen(
-                            onSettingsClick = { showSettings = true },
-                            modifier = Modifier.padding(innerPadding)
-                        )
+                    NavHost(
+                        navController = navController,
+                        startDestination = Screen.Weather.route,
+                        modifier = Modifier.padding(innerPadding)
+                    ) {
+                        composable(Screen.Weather.route) {
+                            WeatherScreen(
+                                onSettingsClick = { navController.navigate(Screen.Settings.route) },
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
+                        composable(Screen.Settings.route) {
+                            SettingsScreen(
+                                navController = navController,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
                     }
                 }
             }

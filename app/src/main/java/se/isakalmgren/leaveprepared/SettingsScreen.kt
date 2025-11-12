@@ -1,5 +1,6 @@
 package se.isakalmgren.leaveprepared
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -14,13 +15,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
+    navController: NavController,
     configRepository: ConfigRepository = koinInject(),
-    onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val configState = configRepository.config.collectAsState()
@@ -34,6 +37,14 @@ fun SettingsScreen(
     val coroutineScope = rememberCoroutineScope()
     var showSaveSuccess by remember { mutableStateOf(false) }
     var showError by remember { mutableStateOf<String?>(null) }
+    var showResetDialog by remember { mutableStateOf(false) }
+    var showExitDialog by remember { mutableStateOf(false) }
+    
+    // Track if there are unsaved changes
+    val hasChanges = remember(settingsState, currentConfig) {
+        val currentState = SettingsState.fromConfig(currentConfig)
+        settingsState != currentState
+    }
     
     // Update state when config changes externally
     LaunchedEffect(currentConfig) {
@@ -55,259 +66,388 @@ fun SettingsScreen(
         }
     }
     
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(16.dp)
-            .verticalScroll(rememberScrollState())
-    ) {
-        // Header
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Settings",
-                fontSize = 32.sp,
-                fontWeight = FontWeight.Bold,
-                style = MaterialTheme.typography.headlineLarge
+    fun handleBackNavigation() {
+        if (hasChanges) {
+            showExitDialog = true
+        } else {
+            navController.popBackStack()
+        }
+    }
+    
+    // Handle system back button - Navigation Compose handles this automatically,
+    // but we intercept it to check for unsaved changes
+    BackHandler(enabled = true) {
+        handleBackNavigation()
+    }
+    
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Settings") },
+                navigationIcon = {
+                    IconButton(onClick = { handleBackNavigation() }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back"
+                        )
+                    }
+                }
             )
-            IconButton(onClick = onBack) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back"
-                )
+        },
+        bottomBar = {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                tonalElevation = 3.dp,
+                shadowElevation = 3.dp
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    if (hasChanges) {
+                        Text(
+                            text = "You have unsaved changes",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(bottom = 4.dp)
+                        )
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        TextButton(
+                            onClick = { showResetDialog = true },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Reset")
+                        }
+                        Button(
+                            onClick = { saveConfig() },
+                            modifier = Modifier.weight(2f),
+                            enabled = hasChanges
+                        ) {
+                            Text("Save Changes")
+                        }
+                    }
+                }
             }
         }
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        // Success/Error messages
-        if (showSaveSuccess) {
-            SuccessCard(
-                message = "Settings saved successfully!",
-                modifier = Modifier.fillMaxWidth()
-            )
+    ) { paddingValues ->
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(horizontal = 16.dp)
+                .verticalScroll(rememberScrollState())
+        ) {
             Spacer(modifier = Modifier.height(8.dp))
+            
+            // Success/Error messages
+            if (showSaveSuccess) {
+                SuccessCard(
+                    message = "Settings saved successfully!",
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+            
+            if (showError != null) {
+                ErrorCard(
+                    message = showError!!,
+                    modifier = Modifier.fillMaxWidth(),
+                    onDismiss = { showError = null }
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+            
+            // Commute Times Section
+            SettingsSection(
+                title = "Commute Times",
+                subtitle = "24-hour format (0-23)"
+            ) {
+                CommuteTimeInput(
+                    label = "Morning Commute",
+                    startHour = settingsState.morningStart,
+                    endHour = settingsState.morningEnd,
+                    onStartChange = { settingsState = settingsState.copy(morningStart = it) },
+                    onEndChange = { settingsState = settingsState.copy(morningEnd = it) }
+                )
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                CommuteTimeInput(
+                    label = "Evening Commute",
+                    startHour = settingsState.eveningStart,
+                    endHour = settingsState.eveningEnd,
+                    onStartChange = { settingsState = settingsState.copy(eveningStart = it) },
+                    onEndChange = { settingsState = settingsState.copy(eveningEnd = it) }
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Temperature Thresholds Section
+            SettingsSection(
+                title = "Temperature Thresholds",
+                subtitle = "Temperature in °C for clothing recommendations"
+            ) {
+                TemperatureThresholdInput(
+                    label = "Very Light",
+                    value = settingsState.tempVeryLight,
+                    onValueChange = { settingsState = settingsState.copy(tempVeryLight = it) },
+                    description = "Shorts and t-shirt weather"
+                )
+                
+                TemperatureThresholdInput(
+                    label = "Light",
+                    value = settingsState.tempLight,
+                    onValueChange = { settingsState = settingsState.copy(tempLight = it) },
+                    description = "T-shirt with light jacket"
+                )
+                
+                TemperatureThresholdInput(
+                    label = "Moderate",
+                    value = settingsState.tempModerate,
+                    onValueChange = { settingsState = settingsState.copy(tempModerate = it) },
+                    description = "Long sleeves and light jacket"
+                )
+                
+                TemperatureThresholdInput(
+                    label = "Cool",
+                    value = settingsState.tempWarm,
+                    onValueChange = { settingsState = settingsState.copy(tempWarm = it) },
+                    description = "Sweater and jacket recommended"
+                )
+                
+                TemperatureThresholdInput(
+                    label = "Cold",
+                    value = settingsState.tempVeryWarm,
+                    onValueChange = { settingsState = settingsState.copy(tempVeryWarm = it) },
+                    description = "Heavy jacket and layers needed"
+                )
+                
+                TemperatureThresholdInput(
+                    label = "Very Cold",
+                    value = settingsState.tempCold,
+                    onValueChange = { settingsState = settingsState.copy(tempCold = it) },
+                    description = "Winter coat and warm layers"
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Precipitation Thresholds Section
+            SettingsSection(
+                title = "Precipitation Thresholds",
+                subtitle = "When to recommend rain clothes"
+            ) {
+                val probError = remember(settingsState.precipProbThreshold) {
+                    val prob = settingsState.precipProbThreshold.toDoubleOrNull()
+                    when {
+                        settingsState.precipProbThreshold.isBlank() -> "Required"
+                        prob == null -> "Invalid number"
+                        prob < 0 || prob > 100 -> "Must be 0-100"
+                        else -> null
+                    }
+                }
+                
+                val amountError = remember(settingsState.precipAmountThreshold) {
+                    val amount = settingsState.precipAmountThreshold.toDoubleOrNull()
+                    when {
+                        settingsState.precipAmountThreshold.isBlank() -> "Required"
+                        amount == null -> "Invalid number"
+                        amount < 0 -> "Must be positive"
+                        else -> null
+                    }
+                }
+                
+                OutlinedTextField(
+                    value = settingsState.precipProbThreshold,
+                    onValueChange = { settingsState = settingsState.copy(precipProbThreshold = it) },
+                    label = { Text("Probability Threshold (%)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    singleLine = true,
+                    isError = probError != null,
+                    supportingText = {
+                        if (probError != null) {
+                            Text(probError, color = MaterialTheme.colorScheme.error)
+                        } else {
+                            Text("Minimum probability to recommend rain clothes")
+                        }
+                    }
+                )
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                OutlinedTextField(
+                    value = settingsState.precipAmountThreshold,
+                    onValueChange = { settingsState = settingsState.copy(precipAmountThreshold = it) },
+                    label = { Text("Amount Threshold (mm)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    singleLine = true,
+                    isError = amountError != null,
+                    supportingText = {
+                        if (amountError != null) {
+                            Text(amountError, color = MaterialTheme.colorScheme.error)
+                        } else {
+                            Text("Minimum expected precipitation amount")
+                        }
+                    }
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Clothing Messages Section
+            SettingsSection(
+                title = "Clothing Messages",
+                subtitle = "Customize messages for each clothing level"
+            ) {
+                ClothingMessageInput(
+                    level = 1,
+                    value = settingsState.clothingMsg1,
+                    onValueChange = { settingsState = settingsState.copy(clothingMsg1 = it) },
+                    threshold = currentConfig.temperatureVeryLight
+                )
+                
+                ClothingMessageInput(
+                    level = 2,
+                    value = settingsState.clothingMsg2,
+                    onValueChange = { settingsState = settingsState.copy(clothingMsg2 = it) },
+                    threshold = currentConfig.temperatureLight
+                )
+                
+                ClothingMessageInput(
+                    level = 3,
+                    value = settingsState.clothingMsg3,
+                    onValueChange = { settingsState = settingsState.copy(clothingMsg3 = it) },
+                    threshold = currentConfig.temperatureModerate
+                )
+                
+                ClothingMessageInput(
+                    level = 4,
+                    value = settingsState.clothingMsg4,
+                    onValueChange = { settingsState = settingsState.copy(clothingMsg4 = it) },
+                    threshold = currentConfig.temperatureWarm
+                )
+                
+                ClothingMessageInput(
+                    level = 5,
+                    value = settingsState.clothingMsg5,
+                    onValueChange = { settingsState = settingsState.copy(clothingMsg5 = it) },
+                    threshold = currentConfig.temperatureVeryWarm
+                )
+                
+                ClothingMessageInput(
+                    level = 6,
+                    value = settingsState.clothingMsg6,
+                    onValueChange = { settingsState = settingsState.copy(clothingMsg6 = it) },
+                    threshold = currentConfig.temperatureCold
+                )
+                
+                ClothingMessageInput(
+                    level = 7,
+                    value = settingsState.clothingMsg7,
+                    onValueChange = { settingsState = settingsState.copy(clothingMsg7 = it) },
+                    threshold = currentConfig.temperatureCold,
+                    isLast = true
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Timezone Section
+            SettingsSection(
+                title = "Timezone",
+                subtitle = "Your local timezone"
+            ) {
+                val timezoneError = remember(settingsState.timezone) {
+                    if (settingsState.timezone.isBlank()) {
+                        "Timezone cannot be empty"
+                    } else {
+                        try {
+                            java.time.ZoneId.of(settingsState.timezone)
+                            null
+                        } catch (e: Exception) {
+                            "Invalid timezone ID"
+                        }
+                    }
+                }
+                
+                OutlinedTextField(
+                    value = settingsState.timezone,
+                    onValueChange = { settingsState = settingsState.copy(timezone = it) },
+                    label = { Text("Timezone ID") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    placeholder = { Text("e.g., Europe/Stockholm") },
+                    supportingText = {
+                        if (timezoneError != null) {
+                            Text(timezoneError, color = MaterialTheme.colorScheme.error)
+                        } else {
+                            Text("Common: Europe/Stockholm, America/New_York, Asia/Tokyo")
+                        }
+                    },
+                    isError = timezoneError != null
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(80.dp)) // Space for bottom bar
         }
         
-        if (showError != null) {
-            ErrorCard(
-                message = showError!!,
-                modifier = Modifier.fillMaxWidth(),
-                onDismiss = { showError = null }
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-        }
-        
-        // Commute Times Section
-        SettingsSection(
-            title = "Commute Times",
-            subtitle = "24-hour format (0-23)"
-        ) {
-            CommuteTimeInput(
-                label = "Morning Commute",
-                startHour = settingsState.morningStart,
-                endHour = settingsState.morningEnd,
-                onStartChange = { settingsState = settingsState.copy(morningStart = it) },
-                onEndChange = { settingsState = settingsState.copy(morningEnd = it) }
-            )
-            
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            CommuteTimeInput(
-                label = "Evening Commute",
-                startHour = settingsState.eveningStart,
-                endHour = settingsState.eveningEnd,
-                onStartChange = { settingsState = settingsState.copy(eveningStart = it) },
-                onEndChange = { settingsState = settingsState.copy(eveningEnd = it) }
-            )
-        }
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        // Temperature Thresholds Section
-        SettingsSection(
-            title = "Temperature Thresholds",
-            subtitle = "Temperature in °C for clothing recommendations"
-        ) {
-            TemperatureThresholdInput(
-                label = "Very Light",
-                value = settingsState.tempVeryLight,
-                onValueChange = { settingsState = settingsState.copy(tempVeryLight = it) },
-                description = "Shorts and t-shirt weather"
-            )
-            
-            TemperatureThresholdInput(
-                label = "Light",
-                value = settingsState.tempLight,
-                onValueChange = { settingsState = settingsState.copy(tempLight = it) },
-                description = "T-shirt with light jacket"
-            )
-            
-            TemperatureThresholdInput(
-                label = "Moderate",
-                value = settingsState.tempModerate,
-                onValueChange = { settingsState = settingsState.copy(tempModerate = it) },
-                description = "Long sleeves and light jacket"
-            )
-            
-            TemperatureThresholdInput(
-                label = "Cool",
-                value = settingsState.tempWarm,
-                onValueChange = { settingsState = settingsState.copy(tempWarm = it) },
-                description = "Sweater and jacket"
-            )
-            
-            TemperatureThresholdInput(
-                label = "Cold",
-                value = settingsState.tempVeryWarm,
-                onValueChange = { settingsState = settingsState.copy(tempVeryWarm = it) },
-                description = "Heavy jacket and layers"
-            )
-            
-            TemperatureThresholdInput(
-                label = "Very Cold",
-                value = settingsState.tempCold,
-                onValueChange = { settingsState = settingsState.copy(tempCold = it) },
-                description = "Winter coat and warm layers"
-            )
-        }
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        // Precipitation Thresholds Section
-        SettingsSection(
-            title = "Precipitation Thresholds",
-            subtitle = "When to recommend rain clothes"
-        ) {
-            OutlinedTextField(
-                value = settingsState.precipProbThreshold,
-                onValueChange = { settingsState = settingsState.copy(precipProbThreshold = it) },
-                label = { Text("Probability Threshold (%)") },
-                modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                singleLine = true,
-                supportingText = { Text("Minimum probability to recommend rain clothes") }
-            )
-            
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            OutlinedTextField(
-                value = settingsState.precipAmountThreshold,
-                onValueChange = { settingsState = settingsState.copy(precipAmountThreshold = it) },
-                label = { Text("Amount Threshold (mm)") },
-                modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                singleLine = true,
-                supportingText = { Text("Minimum expected precipitation amount") }
-            )
-        }
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        // Clothing Messages Section
-        SettingsSection(
-            title = "Clothing Messages",
-            subtitle = "Customize messages for each clothing level"
-        ) {
-            ClothingMessageInput(
-                level = 1,
-                value = settingsState.clothingMsg1,
-                onValueChange = { settingsState = settingsState.copy(clothingMsg1 = it) },
-                threshold = currentConfig.temperatureVeryLight
-            )
-            
-            ClothingMessageInput(
-                level = 2,
-                value = settingsState.clothingMsg2,
-                onValueChange = { settingsState = settingsState.copy(clothingMsg2 = it) },
-                threshold = currentConfig.temperatureLight
-            )
-            
-            ClothingMessageInput(
-                level = 3,
-                value = settingsState.clothingMsg3,
-                onValueChange = { settingsState = settingsState.copy(clothingMsg3 = it) },
-                threshold = currentConfig.temperatureModerate
-            )
-            
-            ClothingMessageInput(
-                level = 4,
-                value = settingsState.clothingMsg4,
-                onValueChange = { settingsState = settingsState.copy(clothingMsg4 = it) },
-                threshold = currentConfig.temperatureWarm
-            )
-            
-            ClothingMessageInput(
-                level = 5,
-                value = settingsState.clothingMsg5,
-                onValueChange = { settingsState = settingsState.copy(clothingMsg5 = it) },
-                threshold = currentConfig.temperatureVeryWarm
-            )
-            
-            ClothingMessageInput(
-                level = 6,
-                value = settingsState.clothingMsg6,
-                onValueChange = { settingsState = settingsState.copy(clothingMsg6 = it) },
-                threshold = currentConfig.temperatureCold
-            )
-            
-            ClothingMessageInput(
-                level = 7,
-                value = settingsState.clothingMsg7,
-                onValueChange = { settingsState = settingsState.copy(clothingMsg7 = it) },
-                threshold = currentConfig.temperatureCold,
-                isLast = true
-            )
-        }
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        // Timezone Section
-        SettingsSection(
-            title = "Timezone",
-            subtitle = "Your local timezone"
-        ) {
-            OutlinedTextField(
-                value = settingsState.timezone,
-                onValueChange = { settingsState = settingsState.copy(timezone = it) },
-                label = { Text("Timezone ID") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                placeholder = { Text("e.g., Europe/Stockholm") },
-                supportingText = {
-                    Text("Common: Europe/Stockholm, America/New_York, Asia/Tokyo")
+        // Reset confirmation dialog
+        if (showResetDialog) {
+            AlertDialog(
+                onDismissRequest = { showResetDialog = false },
+                title = { Text("Reset to Defaults") },
+                text = { Text("Are you sure you want to reset all settings to their default values? This cannot be undone.") },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            configRepository.resetToDefaults()
+                            showResetDialog = false
+                            showError = null
+                        }
+                    ) {
+                        Text("Reset")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showResetDialog = false }) {
+                        Text("Cancel")
+                    }
                 }
             )
         }
         
-        Spacer(modifier = Modifier.height(24.dp))
-        
-        // Action Buttons
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            OutlinedButton(
-                onClick = {
-                    configRepository.resetToDefaults()
-                    showError = null
+        // Exit confirmation dialog
+        if (showExitDialog) {
+            AlertDialog(
+                onDismissRequest = { showExitDialog = false },
+                title = { Text("Unsaved Changes") },
+                text = { Text("You have unsaved changes. Are you sure you want to leave? Your changes will be lost.") },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showExitDialog = false
+                            navController.popBackStack()
+                        }
+                    ) {
+                        Text("Discard")
+                    }
                 },
-                modifier = Modifier.weight(1f)
-            ) {
-                Text("Reset to Defaults")
-            }
-            Button(
-                onClick = { saveConfig() },
-                modifier = Modifier.weight(1f)
-            ) {
-                Text("Save")
-            }
+                dismissButton = {
+                    TextButton(onClick = { showExitDialog = false }) {
+                        Text("Cancel")
+                    }
+                }
+            )
         }
-        
-        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 
@@ -321,6 +461,7 @@ private fun SettingsSection(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
@@ -367,13 +508,35 @@ private fun CommuteTimeInput(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            val startError = remember(startHour) {
+                val hour = startHour.toIntOrNull()
+                when {
+                    startHour.isBlank() -> "Required"
+                    hour == null -> "Invalid number"
+                    hour < 0 || hour > 23 -> "Must be 0-23"
+                    else -> null
+                }
+            }
+            
+            val endError = remember(endHour) {
+                val hour = endHour.toIntOrNull()
+                when {
+                    endHour.isBlank() -> "Required"
+                    hour == null -> "Invalid number"
+                    hour < 0 || hour > 23 -> "Must be 0-23"
+                    else -> null
+                }
+            }
+            
             OutlinedTextField(
                 value = startHour,
                 onValueChange = onStartChange,
                 label = { Text("Start Hour") },
                 modifier = Modifier.weight(1f),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                singleLine = true
+                singleLine = true,
+                isError = startError != null,
+                supportingText = startError?.let { { Text(it, color = MaterialTheme.colorScheme.error) } }
             )
             OutlinedTextField(
                 value = endHour,
@@ -381,7 +544,9 @@ private fun CommuteTimeInput(
                 label = { Text("End Hour") },
                 modifier = Modifier.weight(1f),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                singleLine = true
+                singleLine = true,
+                isError = endError != null,
+                supportingText = endError?.let { { Text(it, color = MaterialTheme.colorScheme.error) } }
             )
         }
     }
@@ -394,6 +559,15 @@ private fun TemperatureThresholdInput(
     onValueChange: (String) -> Unit,
     description: String
 ) {
+    val error = remember(value) {
+        val temp = value.toDoubleOrNull()
+        when {
+            value.isBlank() -> "Required"
+            temp == null -> "Invalid number"
+            else -> null
+        }
+    }
+    
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
@@ -401,7 +575,14 @@ private fun TemperatureThresholdInput(
         modifier = Modifier.fillMaxWidth(),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
         singleLine = true,
-        supportingText = { Text(description) }
+        isError = error != null,
+        supportingText = {
+            if (error != null) {
+                Text(error, color = MaterialTheme.colorScheme.error)
+            } else {
+                Text(description)
+            }
+        }
     )
 }
 
@@ -413,6 +594,10 @@ private fun ClothingMessageInput(
     threshold: Double,
     isLast: Boolean = false
 ) {
+    val error = remember(value) {
+        if (value.isBlank()) "Message cannot be empty" else null
+    }
+    
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
@@ -427,8 +612,14 @@ private fun ClothingMessageInput(
         },
         modifier = Modifier.fillMaxWidth(),
         maxLines = 3,
-        minLines = 1
+        minLines = 1,
+        isError = error != null,
+        supportingText = error?.let { { Text(it, color = MaterialTheme.colorScheme.error) } }
     )
+    
+    if (!isLast) {
+        Spacer(modifier = Modifier.height(8.dp))
+    }
 }
 
 @Composable
