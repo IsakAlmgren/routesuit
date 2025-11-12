@@ -82,7 +82,7 @@ fun WeatherScreen(
                 if (state.recommendations.morningCommute != null) {
                     WeatherRecommendationCard(
                         recommendation = state.recommendations.morningCommute,
-                        title = "🌅 To Work",
+                        title = "To Work",
                         appConfig = appConfig
                     )
                 }
@@ -90,7 +90,7 @@ fun WeatherScreen(
                 if (state.recommendations.eveningCommute != null) {
                     WeatherRecommendationCard(
                         recommendation = state.recommendations.eveningCommute,
-                        title = "🌆 From Work",
+                        title = "From Work",
                         appConfig = appConfig
 
                     )
@@ -361,20 +361,23 @@ private fun NoCommuteDataCard() {
 @Composable
 fun WeatherRecommendationCardPreview_MorningRain() {
     LeavePreparedTheme {
+        val appConfig = AppConfig()
+        val recommendationBase = WeatherRecommendation(
+            needsRainClothes = true,
+            clothingLevel = ClothingLevel.LEVEL_4,
+            temperature = 8.5,
+            precipitationProbability = 75.0,
+            precipitationAmount = 2.3,
+            message = "",
+            timeWindow = "Morning Commute (7-9 AM)",
+            rainForLater = false,
+            dayLabel = "Tomorrow"
+        )
+        val recommendation = recommendationBase.copy(message = generateRecommendationMessage(recommendationBase, appConfig))
         WeatherRecommendationCard(
-            recommendation = WeatherRecommendation(
-                needsRainClothes = true,
-                clothingLevel = ClothingLevel.LEVEL_4,
-                temperature = 8.5,
-                precipitationProbability = 75.0,
-                precipitationAmount = 2.3,
-                message = "Warm clothing - sweater and jacket recommended\n🌧️ Bring rain clothes! Precipitation probability: 75% Expected precipitation: 2.3 mm",
-                timeWindow = "Morning Commute (7-9 AM)",
-                rainForLater = false,
-                dayLabel = "Tomorrow"
-            ),
-            title = "🌅 To Work",
-            appConfig = AppConfig()
+            recommendation = recommendation,
+            title = "To Work",
+            appConfig = appConfig
         )
     }
 }
@@ -383,20 +386,23 @@ fun WeatherRecommendationCardPreview_MorningRain() {
 @Composable
 fun WeatherRecommendationCardPreview_MorningRainForLater() {
     LeavePreparedTheme {
+        val appConfig = AppConfig()
+        val recommendationBase = WeatherRecommendation(
+            needsRainClothes = true,
+            clothingLevel = ClothingLevel.LEVEL_3,
+            temperature = 12.0,
+            precipitationProbability = 80.0, // Evening commute's precipitation probability
+            precipitationAmount = 1.5, // Evening commute's precipitation amount
+            message = "",
+            timeWindow = "Morning Commute (7-9 AM)",
+            rainForLater = true,
+            dayLabel = "Tomorrow"
+        )
+        val recommendation = recommendationBase.copy(message = generateRecommendationMessage(recommendationBase, appConfig))
         WeatherRecommendationCard(
-            recommendation = WeatherRecommendation(
-                needsRainClothes = true,
-                clothingLevel = ClothingLevel.LEVEL_3,
-                temperature = 12.0,
-                precipitationProbability = 0.0,
-                precipitationAmount = 0.0,
-                message = "Moderate clothing - long sleeves and a light jacket\n🌧️ Bring rain clothes for later! Rain expected on your way home (80% chance, 1.5 mm)",
-                timeWindow = "Morning Commute (7-9 AM)",
-                rainForLater = true,
-                dayLabel = "Tomorrow"
-            ),
-            title = "🌅 To Work",
-            appConfig = AppConfig()
+            recommendation = recommendation,
+            title = "To Work",
+            appConfig = appConfig
         )
     }
 }
@@ -405,20 +411,23 @@ fun WeatherRecommendationCardPreview_MorningRainForLater() {
 @Composable
 fun WeatherRecommendationCardPreview_MorningNoRain() {
     LeavePreparedTheme {
+        val appConfig = AppConfig()
+        val recommendationBase = WeatherRecommendation(
+            needsRainClothes = false,
+            clothingLevel = ClothingLevel.LEVEL_2,
+            temperature = 18.0,
+            precipitationProbability = 10.0,
+            precipitationAmount = 0.0,
+            message = "",
+            timeWindow = "Morning Commute (7-9 AM)",
+            rainForLater = false,
+            dayLabel = "Today"
+        )
+        val recommendation = recommendationBase.copy(message = generateRecommendationMessage(recommendationBase, appConfig))
         WeatherRecommendationCard(
-            recommendation = WeatherRecommendation(
-                needsRainClothes = false,
-                clothingLevel = ClothingLevel.LEVEL_2,
-                temperature = 18.0,
-                precipitationProbability = 10.0,
-                precipitationAmount = 0.0,
-                message = "Light clothing - t-shirt with a light jacket\n☀️ No rain expected",
-                timeWindow = "Morning Commute (7-9 AM)",
-                rainForLater = false,
-                dayLabel = "Today"
-            ),
-            title = "🌅 To Work",
-            appConfig = AppConfig()
+            recommendation = recommendation,
+            title = "To Work",
+            appConfig = appConfig
         )
     }
 }
@@ -427,20 +436,23 @@ fun WeatherRecommendationCardPreview_MorningNoRain() {
 @Composable
 fun WeatherRecommendationCardPreview_EveningRain() {
     LeavePreparedTheme {
+        val appConfig = AppConfig()
+        val recommendationBase = WeatherRecommendation(
+            needsRainClothes = true,
+            clothingLevel = ClothingLevel.LEVEL_6,
+            temperature = -2.0,
+            precipitationProbability = 90.0,
+            precipitationAmount = 5.0,
+            message = "",
+            timeWindow = "Evening Commute (4-7 PM)",
+            rainForLater = false,
+            dayLabel = "Today"
+        )
+        val recommendation = recommendationBase.copy(message = generateRecommendationMessage(recommendationBase, appConfig))
         WeatherRecommendationCard(
-            recommendation = WeatherRecommendation(
-                needsRainClothes = true,
-                clothingLevel = ClothingLevel.LEVEL_6,
-                temperature = -2.0,
-                precipitationProbability = 90.0,
-                precipitationAmount = 5.0,
-                message = "Very cold - winter coat and warm layers essential\n🌧️ Bring rain clothes! Precipitation probability: 90% Expected precipitation: 5.0 mm",
-                timeWindow = "Evening Commute (4-7 PM)",
-                rainForLater = false,
-                dayLabel = "Today"
-            ),
-            title = "🌆 From Work",
-            appConfig = AppConfig()
+            recommendation = recommendation,
+            title = "From Work",
+            appConfig = appConfig
         )
     }
 }
@@ -449,20 +461,23 @@ fun WeatherRecommendationCardPreview_EveningRain() {
 @Composable
 fun WeatherRecommendationCardPreview_EveningNoRain() {
     LeavePreparedTheme {
+        val appConfig = AppConfig()
+        val recommendationBase = WeatherRecommendation(
+            needsRainClothes = false,
+            clothingLevel = ClothingLevel.LEVEL_1,
+            temperature = 25.0,
+            precipitationProbability = 5.0,
+            precipitationAmount = 0.0,
+            message = "",
+            timeWindow = "Evening Commute (4-7 PM)",
+            rainForLater = false,
+            dayLabel = "Today"
+        )
+        val recommendation = recommendationBase.copy(message = generateRecommendationMessage(recommendationBase, appConfig))
         WeatherRecommendationCard(
-            recommendation = WeatherRecommendation(
-                needsRainClothes = false,
-                clothingLevel = ClothingLevel.LEVEL_1,
-                temperature = 25.0,
-                precipitationProbability = 5.0,
-                precipitationAmount = 0.0,
-                message = "Light clothing - shorts and t-shirt weather\n☀️ No rain expected",
-                timeWindow = "Evening Commute (4-7 PM)",
-                rainForLater = false,
-                dayLabel = "Today"
-            ),
-            title = "🌆 From Work",
-            appConfig = AppConfig()
+            recommendation = recommendation,
+            title = "From Work",
+            appConfig = appConfig
         )
     }
 }
@@ -471,6 +486,7 @@ fun WeatherRecommendationCardPreview_EveningNoRain() {
 @Composable
 fun WeatherScreenPreview_Success() {
     LeavePreparedTheme {
+        val appConfig = AppConfig()
         Surface(modifier = Modifier.fillMaxSize()) {
             Column(
                 modifier = Modifier
@@ -482,36 +498,42 @@ fun WeatherScreenPreview_Success() {
             ) {
                 WeatherScreenHeader(onSettingsClick = {})
                 
+                val morningRecommendationBase = WeatherRecommendation(
+                    needsRainClothes = true,
+                    clothingLevel = ClothingLevel.LEVEL_4,
+                    temperature = 8.5,
+                    precipitationProbability = 75.0,
+                    precipitationAmount = 2.3,
+                    message = "",
+                    timeWindow = "Morning Commute (7-9 AM)",
+                    rainForLater = false,
+                    dayLabel = "Tomorrow"
+                )
+                val morningRecommendation = morningRecommendationBase.copy(message = generateRecommendationMessage(morningRecommendationBase, appConfig))
+                
+                val eveningRecommendationBase = WeatherRecommendation(
+                    needsRainClothes = false,
+                    clothingLevel = ClothingLevel.LEVEL_3,
+                    temperature = 10.0,
+                    precipitationProbability = 20.0,
+                    precipitationAmount = 0.0,
+                    message = "",
+                    timeWindow = "Evening Commute (4-7 PM)",
+                    rainForLater = false,
+                    dayLabel = "Today"
+                )
+                val eveningRecommendation = eveningRecommendationBase.copy(message = generateRecommendationMessage(eveningRecommendationBase, appConfig))
+                
                 WeatherRecommendationCard(
-                    recommendation = WeatherRecommendation(
-                        needsRainClothes = true,
-                        clothingLevel = ClothingLevel.LEVEL_4,
-                        temperature = 8.5,
-                        precipitationProbability = 75.0,
-                        precipitationAmount = 2.3,
-                        message = "Warm clothing - sweater and jacket recommended\n🌧️ Bring rain clothes! Precipitation probability: 75% Expected precipitation: 2.3 mm",
-                        timeWindow = "Morning Commute (7-9 AM)",
-                        rainForLater = false,
-                        dayLabel = "Tomorrow"
-                    ),
-                    title = "🌅 To Work",
-                    appConfig = AppConfig()
+                    recommendation = morningRecommendation,
+                    title = "To Work",
+                    appConfig = appConfig
                 )
                 
                 WeatherRecommendationCard(
-                    recommendation = WeatherRecommendation(
-                        needsRainClothes = false,
-                        clothingLevel = ClothingLevel.LEVEL_3,
-                        temperature = 10.0,
-                        precipitationProbability = 20.0,
-                        precipitationAmount = 0.0,
-                        message = "Moderate clothing - long sleeves and a light jacket\n☀️ No rain expected",
-                        timeWindow = "Evening Commute (4-7 PM)",
-                        rainForLater = false,
-                        dayLabel = "Today"
-                    ),
-                    title = "🌆 From Work",
-                    appConfig = AppConfig()
+                    recommendation = eveningRecommendation,
+                    title = "From Work",
+                    appConfig = appConfig
                 )
                 
                 Button(

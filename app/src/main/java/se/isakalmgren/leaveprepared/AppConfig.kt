@@ -23,7 +23,7 @@ data class AppConfig(
     // Below -5°C is VERY_COLD
     
     // Precipitation thresholds
-    val precipitationProbabilityThreshold: Double = 50.0,  // Percentage
+    val precipitationProbabilityThreshold: Double = 20.0,  // Percentage
     val precipitationAmountThreshold: Double = 0.5,        // Millimeters
     
     // Clothing level messages (configurable by user)

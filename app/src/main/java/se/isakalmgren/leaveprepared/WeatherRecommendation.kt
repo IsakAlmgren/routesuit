@@ -58,6 +58,41 @@ fun getClothingMessage(level: ClothingLevel, config: AppConfig): String {
     }
 }
 
+/**
+ * Generates the recommendation message for a WeatherRecommendation.
+ * 
+ * @param recommendation The weather recommendation to generate a message for
+ * @param config The app configuration containing thresholds and clothing messages
+ * @return The formatted recommendation message
+ */
+fun generateRecommendationMessage(recommendation: WeatherRecommendation, config: AppConfig): String {
+    val clothingMessage = getClothingMessage(recommendation.clothingLevel, config)
+    
+    return buildString {
+        append(clothingMessage)
+        if (recommendation.needsRainClothes) {
+            if (recommendation.rainForLater) {
+                // Rain for later case - use the recommendation's precipitation values
+                // (which should be set to the evening commute's values)
+                append("\n🌧️ Bring rain clothes for later! ")
+                append("Rain expected on your way home (${recommendation.precipitationProbability.toInt()}% chance, ")
+                append("${String.format("%.1f", recommendation.precipitationAmount)} mm)")
+            } else {
+                // Normal rain case
+                append("\n🌧️ Bring rain clothes! ")
+                if (recommendation.precipitationProbability > config.precipitationProbabilityThreshold) {
+                    append("Precipitation probability: ${recommendation.precipitationProbability.toInt()}%")
+                }
+                if (recommendation.precipitationAmount > config.precipitationAmountThreshold) {
+                    append(" Expected precipitation: ${String.format("%.1f", recommendation.precipitationAmount)} mm")
+                }
+            }
+        } else {
+            append("\n☀️ No rain expected")
+        }
+    }
+}
+
 fun parseTime(timeString: String, config: AppConfig): ZonedDateTime? {
     return try {
         val instant = Instant.parse(timeString)
@@ -135,36 +170,23 @@ fun analyzeWeatherForCommute(
                           maxPrecipitationAmount > config.precipitationAmountThreshold
     
     val clothingLevel = getClothingLevel(avgTemperature, config)
-    val clothingMessage = getClothingMessage(clothingLevel, config)
-    
-    val message = buildString {
-        append(clothingMessage)
-        if (needsRainClothes) {
-            append("\n🌧️ Bring rain clothes! ")
-            if (maxPrecipitationProb > config.precipitationProbabilityThreshold) {
-                append("Precipitation probability: ${maxPrecipitationProb.toInt()}%")
-            }
-            if (maxPrecipitationAmount > config.precipitationAmountThreshold) {
-                append(" Expected precipitation: ${String.format("%.1f", maxPrecipitationAmount)} mm")
-            }
-        } else {
-            append("\n☀️ No rain expected")
-        }
-    }
     
     val dayLabel = getDayLabel(commuteDate, currentDate)
     
-    return WeatherRecommendation(
+    val recommendation = WeatherRecommendation(
         needsRainClothes = needsRainClothes,
         clothingLevel = clothingLevel,
         temperature = avgTemperature,
         precipitationProbability = maxPrecipitationProb,
         precipitationAmount = maxPrecipitationAmount,
-        message = message,
+        message = "", // Will be generated below
         timeWindow = commuteName,
         date = commuteDate,
-        dayLabel = dayLabel
+        dayLabel = dayLabel,
+        rainForLater = false
     )
+    
+    return recommendation.copy(message = generateRecommendationMessage(recommendation, config))
 }
 
 fun analyzeWeatherForCommutes(timeSeries: List<TimeSeries>, config: AppConfig): CommuteRecommendations {
@@ -203,18 +225,15 @@ fun analyzeWeatherForCommutes(timeSeries: List<TimeSeries>, config: AppConfig): 
     // If evening commute needs rain clothes, morning commute should also recommend bringing them
     val morningCommute = if (morningCommuteRaw != null && eveningCommute?.needsRainClothes == true && !morningCommuteRaw.needsRainClothes) {
         // Update morning recommendation to include rain gear for later
-        val updatedMessage = buildString {
-            append(getClothingMessage(morningCommuteRaw.clothingLevel, config))
-            append("\n🌧️ Bring rain clothes for later! ")
-            append("Rain expected on your way home (${eveningCommute.precipitationProbability.toInt()}% chance, ")
-            append("${String.format("%.1f", eveningCommute.precipitationAmount)} mm)")
-        }
-        
-        morningCommuteRaw.copy(
+        // Use evening commute's precipitation values for the message
+        val updatedRecommendation = morningCommuteRaw.copy(
             needsRainClothes = true,
-            message = updatedMessage,
-            rainForLater = true
+            rainForLater = true,
+            precipitationProbability = eveningCommute.precipitationProbability,
+            precipitationAmount = eveningCommute.precipitationAmount,
+            message = "" // Will be generated below
         )
+        updatedRecommendation.copy(message = generateRecommendationMessage(updatedRecommendation, config))
     } else {
         morningCommuteRaw
     }

@@ -24,8 +24,15 @@ class WeatherNotificationWorker(
             val recommendations = analyzeWeatherForCommutes(response.timeSeries, appConfig)
             
             sendNotification(recommendations)
+            
+            // Reschedule for next day after successful completion
+            NotificationScheduler.scheduleNextDay(applicationContext)
+            
             Result.success()
         } catch (e: Exception) {
+            android.util.Log.e("WeatherNotificationWorker", "Error in doWork", e)
+            // On failure, still reschedule but with retry backoff
+            NotificationScheduler.scheduleNextDay(applicationContext)
             Result.retry()
         }
     }
