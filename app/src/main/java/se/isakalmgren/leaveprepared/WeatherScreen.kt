@@ -7,6 +7,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -126,6 +127,7 @@ fun WeatherRecommendationCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(
@@ -136,18 +138,17 @@ fun WeatherRecommendationCard(
             // Title
             if (title.isNotEmpty()) {
                 RecommendationTitle(title = title, dayLabel = recommendation.dayLabel)
-                Divider()
             }
             
             // Temperature display
-            Text(
-                text = "${String.format("%.1f", recommendation.temperature)}°C",
-                fontSize = 48.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
-            )
-
-            HorizontalDivider(Modifier, DividerDefaults.Thickness, DividerDefaults.color)
+            InfoCard {
+                Text(
+                    text = "${String.format("%.1f", recommendation.temperature)}°C",
+                    fontSize = 48.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
 
             // Clothing recommendation
             ClothingRecommendationCard(
@@ -187,7 +188,6 @@ private fun RecommendationTitle(title: String, dayLabel: String) {
 private fun ClothingRecommendationCard(clothingMessage: String) {
     InfoCard(
         containerColor = MaterialTheme.colorScheme.primaryContainer,
-        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
     ) {
         Text(
             text = "Clothing Recommendation",
@@ -209,7 +209,6 @@ private fun RainRecommendationCard(recommendation: WeatherRecommendation) {
     if (recommendation.needsRainClothes) {
         InfoCard(
             containerColor = MaterialTheme.colorScheme.errorContainer,
-            contentColor = MaterialTheme.colorScheme.onErrorContainer
         ) {
             Text(
                 text = if (recommendation.rainForLater) {
@@ -245,7 +244,6 @@ private fun RainRecommendationCard(recommendation: WeatherRecommendation) {
     } else {
         InfoCard(
             containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-            contentColor = MaterialTheme.colorScheme.onTertiaryContainer
         ) {
             Text(
                 text = "☀️ No Rain Expected",
@@ -264,12 +262,12 @@ private fun RainRecommendationCard(recommendation: WeatherRecommendation) {
 
 @Composable
 private fun InfoCard(
-    containerColor: androidx.compose.ui.graphics.Color,
-    contentColor: androidx.compose.ui.graphics.Color,
+    containerColor: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.surfaceContainer,
     content: @Composable ColumnScope.() -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(containerColor = containerColor)
     ) {
         Column(
@@ -360,7 +358,7 @@ private fun NoCommuteDataCard() {
 @Preview(showBackground = true, name = "Morning Commute - Rain Expected")
 @Composable
 fun WeatherRecommendationCardPreview_MorningRain() {
-    LeavePreparedTheme {
+    LeavePreparedTheme(darkTheme = true) {
         val appConfig = AppConfig()
         val recommendationBase = WeatherRecommendation(
             needsRainClothes = true,

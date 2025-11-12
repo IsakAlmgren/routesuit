@@ -14,7 +14,10 @@ import androidx.compose.ui.platform.LocalContext
 private val DarkColorScheme = darkColorScheme(
     primary = Purple80,
     secondary = PurpleGrey80,
-    tertiary = Pink80
+    tertiary = Pink80,
+    background = Blue20,
+    surface = Blue40,
+    surfaceContainer = Blue60
 )
 
 private val LightColorScheme = lightColorScheme(
@@ -43,7 +46,22 @@ fun LeavePreparedTheme(
     val colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+            val dynamicScheme = if (darkTheme) {
+                dynamicDarkColorScheme(context)
+            } else {
+                dynamicLightColorScheme(context)
+            }
+            // Override colors to use custom blue palette in dark mode
+            // Blue20 (lowest) -> Blue40 (middle) -> Blue60 (highest)
+            if (darkTheme) {
+                dynamicScheme.copy(
+                    background = Blue20,
+                    surface = Blue40,
+                    surfaceContainer = Blue60
+                )
+            } else {
+                dynamicScheme
+            }
         }
 
         darkTheme -> DarkColorScheme
