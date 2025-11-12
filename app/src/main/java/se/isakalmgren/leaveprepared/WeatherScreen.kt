@@ -19,6 +19,7 @@ import androidx.compose.runtime.setValue
 import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -67,32 +68,7 @@ fun WeatherScreen(
     Scaffold(
         modifier = modifier,
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Leave Prepared",
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary,
-                        letterSpacing = 0.5.sp,
-                        modifier = Modifier
-                            .padding(start = 16.dp)
-                            .offset(y = (-8).dp)
-                    )
-                },
-                actions = {
-                    IconButton(onClick = onSettingsClick) {
-                        Icon(
-                            imageVector = Icons.Filled.Settings,
-                            contentDescription = "Settings",
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
-            )
+            WeatherTopAppBar(onSettingsClick = onSettingsClick)
         }
     ) { innerPadding ->
         Column(
@@ -310,6 +286,46 @@ private fun InfoCard(
     }
 }
 
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun WeatherTopAppBar(onSettingsClick: () -> Unit) {
+    TopAppBar(
+        navigationIcon = {
+            Icon(
+                painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                contentDescription = "App Icon",
+                modifier = Modifier
+                    .padding(start = 16.dp)
+                    .size(50.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
+        },
+        title = {
+            Text(
+                text = "Leave Prepared",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary,
+                letterSpacing = 0.5.sp,
+                modifier = Modifier
+                    .padding(start = 16.dp)
+            )
+        },
+        actions = {
+            IconButton(onClick = onSettingsClick) {
+                Icon(
+                    imageVector = Icons.Filled.Settings,
+                    contentDescription = "Settings",
+                    tint = MaterialTheme.colorScheme.onSurface
+                )
+            }
+        },
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    )
+}
 
 @Composable
 private fun ErrorCard(message: String, onRetry: () -> Unit) {
@@ -582,6 +598,31 @@ fun WeatherScreenPreview_Error() {
                 ErrorCard(
                     message = "Failed to fetch weather: Network error",
                     onRetry = { }
+                )
+            }
+        }
+    }
+}
+
+@Preview(showBackground = true, name = "Top App Bar")
+@Composable
+fun WeatherTopAppBarPreview() {
+    LeavePreparedTheme {
+        Scaffold(
+            topBar = {
+                WeatherTopAppBar(onSettingsClick = {})
+            }
+        ) { innerPadding ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+            ) {
+                Text(
+                    text = "Content area",
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .padding(16.dp)
                 )
             }
         }
