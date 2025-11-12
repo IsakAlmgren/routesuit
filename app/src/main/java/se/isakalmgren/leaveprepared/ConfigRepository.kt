@@ -39,8 +39,7 @@ class ConfigRepository(private val context: Context) {
             clothingMessageLevel4 = prefs.getString("clothing_msg_4", defaultConfig.clothingMessageLevel4) ?: defaultConfig.clothingMessageLevel4,
             clothingMessageLevel5 = prefs.getString("clothing_msg_5", defaultConfig.clothingMessageLevel5) ?: defaultConfig.clothingMessageLevel5,
             clothingMessageLevel6 = prefs.getString("clothing_msg_6", defaultConfig.clothingMessageLevel6) ?: defaultConfig.clothingMessageLevel6,
-            clothingMessageLevel7 = prefs.getString("clothing_msg_7", defaultConfig.clothingMessageLevel7) ?: defaultConfig.clothingMessageLevel7,
-            timezone = ZoneId.of(prefs.getString("timezone", "Europe/Stockholm") ?: "Europe/Stockholm")
+            clothingMessageLevel7 = prefs.getString("clothing_msg_7", defaultConfig.clothingMessageLevel7) ?: defaultConfig.clothingMessageLevel7
         )
     }
     
@@ -65,7 +64,6 @@ class ConfigRepository(private val context: Context) {
             putString("clothing_msg_5", config.clothingMessageLevel5)
             putString("clothing_msg_6", config.clothingMessageLevel6)
             putString("clothing_msg_7", config.clothingMessageLevel7)
-            putString("timezone", config.timezone.id)
             apply()
         }
         _config.value = config

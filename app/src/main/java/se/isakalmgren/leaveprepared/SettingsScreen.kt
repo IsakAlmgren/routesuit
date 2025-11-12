@@ -359,44 +359,6 @@ fun SettingsScreen(
                 )
             }
             
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            // Timezone Section
-            SettingsSection(
-                title = "Timezone",
-                subtitle = "Your local timezone"
-            ) {
-                val timezoneError = remember(settingsState.timezone) {
-                    if (settingsState.timezone.isBlank()) {
-                        "Timezone cannot be empty"
-                    } else {
-                        try {
-                            java.time.ZoneId.of(settingsState.timezone)
-                            null
-                        } catch (e: Exception) {
-                            "Invalid timezone ID"
-                        }
-                    }
-                }
-                
-                OutlinedTextField(
-                    value = settingsState.timezone,
-                    onValueChange = { settingsState = settingsState.copy(timezone = it) },
-                    label = { Text("Timezone ID") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    placeholder = { Text("e.g., Europe/Stockholm") },
-                    supportingText = {
-                        if (timezoneError != null) {
-                            Text(timezoneError, color = MaterialTheme.colorScheme.error)
-                        } else {
-                            Text("Common: Europe/Stockholm, America/New_York, Asia/Tokyo")
-                        }
-                    },
-                    isError = timezoneError != null
-                )
-            }
-            
             Spacer(modifier = Modifier.height(80.dp)) // Space for bottom bar
         }
         
@@ -690,8 +652,7 @@ private data class SettingsState(
     val clothingMsg4: String,
     val clothingMsg5: String,
     val clothingMsg6: String,
-    val clothingMsg7: String,
-    val timezone: String
+    val clothingMsg7: String
 ) {
     companion object {
         fun fromConfig(config: AppConfig): SettingsState {
@@ -714,8 +675,7 @@ private data class SettingsState(
                 clothingMsg4 = config.clothingMessageLevel4,
                 clothingMsg5 = config.clothingMessageLevel5,
                 clothingMsg6 = config.clothingMessageLevel6,
-                clothingMsg7 = config.clothingMessageLevel7,
-                timezone = config.timezone.id
+                clothingMsg7 = config.clothingMessageLevel7
             )
         }
     }
@@ -740,12 +700,7 @@ private data class SettingsState(
             clothingMessageLevel4 = clothingMsg4,
             clothingMessageLevel5 = clothingMsg5,
             clothingMessageLevel6 = clothingMsg6,
-            clothingMessageLevel7 = clothingMsg7,
-            timezone = try {
-                java.time.ZoneId.of(timezone)
-            } catch (e: Exception) {
-                fallbackConfig.timezone
-            }
+            clothingMessageLevel7 = clothingMsg7
         )
     }
 }

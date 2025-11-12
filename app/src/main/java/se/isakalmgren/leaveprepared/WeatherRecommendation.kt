@@ -96,7 +96,7 @@ fun generateRecommendationMessage(recommendation: WeatherRecommendation, config:
 fun parseTime(timeString: String, config: AppConfig): ZonedDateTime? {
     return try {
         val instant = Instant.parse(timeString)
-        // Convert to configured timezone
+        // Convert to system default timezone
         instant.atZone(config.timezone)
     } catch (e: Exception) {
         null

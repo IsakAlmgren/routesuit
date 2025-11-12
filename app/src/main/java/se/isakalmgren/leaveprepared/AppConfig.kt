@@ -33,9 +33,10 @@ data class AppConfig(
     val clothingMessageLevel4: String = "Cool weather - sweater and jacket recommended",
     val clothingMessageLevel5: String = "Cold weather - heavy jacket and layers",
     val clothingMessageLevel6: String = "Very cold - winter coat and warm layers essential",
-    val clothingMessageLevel7: String = "Extremely cold - heavy winter gear required",
-    
-    // Timezone
-    val timezone: ZoneId = ZoneId.of("Europe/Stockholm")
-)
+    val clothingMessageLevel7: String = "Extremely cold - heavy winter gear required"
+) {
+    // Always use the system default timezone
+    val timezone: ZoneId
+        get() = ZoneId.systemDefault()
+}
 
