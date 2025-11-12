@@ -21,6 +21,8 @@ class ConfigRepository(private val context: Context) {
     fun loadConfig(): AppConfig {
         val defaultConfig = AppConfig()
         return AppConfig(
+            longitude = prefs.getFloat("longitude", defaultConfig.longitude.toFloat()).toDouble(),
+            latitude = prefs.getFloat("latitude", defaultConfig.latitude.toFloat()).toDouble(),
             morningCommuteStartHour = prefs.getInt("morning_commute_start", 7),
             morningCommuteEndHour = prefs.getInt("morning_commute_end", 9),
             eveningCommuteStartHour = prefs.getInt("evening_commute_start", 16),
@@ -45,6 +47,8 @@ class ConfigRepository(private val context: Context) {
     
     fun saveConfig(config: AppConfig) {
         prefs.edit().apply {
+            putFloat("longitude", config.longitude.toFloat())
+            putFloat("latitude", config.latitude.toFloat())
             putInt("morning_commute_start", config.morningCommuteStartHour)
             putInt("morning_commute_end", config.morningCommuteEndHour)
             putInt("evening_commute_start", config.eveningCommuteStartHour)

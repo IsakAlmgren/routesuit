@@ -7,6 +7,10 @@ import java.time.ZoneId
  * for weather analysis and recommendations.
  */
 data class AppConfig(
+    // Location coordinates
+    val longitude: Double = 14.2048,
+    val latitude: Double = 57.781,
+    
     // Commute timespans (24-hour format)
     val morningCommuteStartHour: Int = 7,
     val morningCommuteEndHour: Int = 9,
@@ -27,13 +31,13 @@ data class AppConfig(
     val precipitationAmountThreshold: Double = 0.5,        // Millimeters
     
     // Clothing level messages (configurable by user)
-    val clothingMessageLevel1: String = "Light clothing - shorts and t-shirt weather",
-    val clothingMessageLevel2: String = "Light clothing - t-shirt with a light jacket",
-    val clothingMessageLevel3: String = "Moderate clothing - long sleeves and a light jacket",
-    val clothingMessageLevel4: String = "Cool weather - sweater and jacket recommended",
-    val clothingMessageLevel5: String = "Cold weather - heavy jacket and layers",
-    val clothingMessageLevel6: String = "Very cold - winter coat and warm layers essential",
-    val clothingMessageLevel7: String = "Extremely cold - heavy winter gear required"
+    val clothingMessageLevel1: String = "Shorts and t-shirt",
+    val clothingMessageLevel2: String = "T-shirt with a light jacket",
+    val clothingMessageLevel3: String = "Long sleeves and a light jacket",
+    val clothingMessageLevel4: String = "Sweater and jacket",
+    val clothingMessageLevel5: String = "Heavy jacket and layers",
+    val clothingMessageLevel6: String = "Winter coat and warm layers essential",
+    val clothingMessageLevel7: String = "Heavy winter gear required"
 ) {
     // Always use the system default timezone
     val timezone: ZoneId

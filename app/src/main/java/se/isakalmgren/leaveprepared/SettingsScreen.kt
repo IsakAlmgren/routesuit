@@ -18,12 +18,17 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
+import android.Manifest
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material.icons.filled.LocationOn
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     navController: NavController,
     configRepository: ConfigRepository = koinInject(),
+    locationHelper: LocationHelper = koinInject(),
     modifier: Modifier = Modifier
 ) {
     val configState = configRepository.config.collectAsState()
@@ -39,6 +44,68 @@ fun SettingsScreen(
     var showError by remember { mutableStateOf<String?>(null) }
     var showResetDialog by remember { mutableStateOf(false) }
     var showExitDialog by remember { mutableStateOf(false) }
+    var isFetchingLocation by remember { mutableStateOf(false) }
+    
+    // Permission launcher for location
+    val locationPermissionLauncherInternal = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val fineLocationGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] ?: false
+        val coarseLocationGranted = permissions[Manifest.permission.ACCESS_COARSE_LOCATION] ?: false
+        
+        if (fineLocationGranted || coarseLocationGranted) {
+            coroutineScope.launch {
+                isFetchingLocation = true
+                try {
+                    val location = locationHelper.getCurrentLocation()
+                    if (location != null) {
+                        settingsState = settingsState.copy(
+                            longitude = String.format(java.util.Locale.US, "%.4f", location.first),
+                            latitude = String.format(java.util.Locale.US, "%.4f", location.second)
+                        )
+                    } else {
+                        showError = "Could not get current location. Please try again or enter coordinates manually."
+                    }
+                } catch (e: Exception) {
+                    showError = "Error getting location: ${e.message}"
+                } finally {
+                    isFetchingLocation = false
+                }
+            }
+        } else {
+            showError = "Location permission denied. Please grant location permission or enter coordinates manually."
+        }
+    }
+    
+    fun getCurrentLocation() {
+        if (!locationHelper.hasLocationPermission()) {
+            locationPermissionLauncherInternal.launch(
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                )
+            )
+        } else {
+            coroutineScope.launch {
+                isFetchingLocation = true
+                try {
+                    val location = locationHelper.getCurrentLocation()
+                    if (location != null) {
+                        settingsState = settingsState.copy(
+                            longitude = String.format(java.util.Locale.US, "%.4f", location.first),
+                            latitude = String.format(java.util.Locale.US, "%.4f", location.second)
+                        )
+                    } else {
+                        showError = "Could not get current location. Please try again or enter coordinates manually."
+                    }
+                } catch (e: Exception) {
+                    showError = "Error getting location: ${e.message}"
+                } finally {
+                    isFetchingLocation = false
+                }
+            }
+        }
+    }
     
     // Track if there are unsaved changes
     val hasChanges = remember(settingsState, currentConfig) {
@@ -140,10 +207,10 @@ fun SettingsScreen(
             modifier = modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(horizontal = 16.dp)
+                .padding(horizontal = 16.dp, vertical = 8.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(4.dp))
             
             // Success/Error messages
             if (showSaveSuccess) {
@@ -162,6 +229,95 @@ fun SettingsScreen(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
             }
+            
+            // Location Section
+            SettingsSection(
+                title = "Location",
+                subtitle = "Set the location for weather forecasts"
+            ) {
+                val longitudeError = remember(settingsState.longitude) {
+                    val lon = settingsState.longitude.toDoubleOrNull()
+                    when {
+                        settingsState.longitude.isBlank() -> "Required"
+                        lon == null -> "Invalid number"
+                        lon < -180 || lon > 180 -> "Must be between -180 and 180"
+                        else -> null
+                    }
+                }
+                
+                val latitudeError = remember(settingsState.latitude) {
+                    val lat = settingsState.latitude.toDoubleOrNull()
+                    when {
+                        settingsState.latitude.isBlank() -> "Required"
+                        lat == null -> "Invalid number"
+                        lat < -90 || lat > 90 -> "Must be between -90 and 90"
+                        else -> null
+                    }
+                }
+                
+                OutlinedTextField(
+                    value = settingsState.longitude,
+                    onValueChange = { settingsState = settingsState.copy(longitude = it) },
+                    label = { Text("Longitude") },
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    singleLine = true,
+                    isError = longitudeError != null,
+                    supportingText = {
+                        if (longitudeError != null) {
+                            Text(longitudeError, color = MaterialTheme.colorScheme.error)
+                        } else {
+                            Text("Longitude (-180 to 180)")
+                        }
+                    }
+                )
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                OutlinedTextField(
+                    value = settingsState.latitude,
+                    onValueChange = { settingsState = settingsState.copy(latitude = it) },
+                    label = { Text("Latitude") },
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    singleLine = true,
+                    isError = latitudeError != null,
+                    supportingText = {
+                        if (latitudeError != null) {
+                            Text(latitudeError, color = MaterialTheme.colorScheme.error)
+                        } else {
+                            Text("Latitude (-90 to 90)")
+                        }
+                    }
+                )
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                Button(
+                    onClick = { getCurrentLocation() },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !isFetchingLocation
+                ) {
+                    if (isFetchingLocation) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Getting Location...")
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.LocationOn,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Get Current Location")
+                    }
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(20.dp))
             
             // Commute Times Section
             SettingsSection(
@@ -187,7 +343,7 @@ fun SettingsScreen(
                 )
             }
             
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(20.dp))
             
             // Temperature Thresholds Section
             SettingsSection(
@@ -237,7 +393,7 @@ fun SettingsScreen(
                 )
             }
             
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(20.dp))
             
             // Precipitation Thresholds Section
             SettingsSection(
@@ -301,7 +457,7 @@ fun SettingsScreen(
                 )
             }
             
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(20.dp))
             
             // Clothing Messages Section
             SettingsSection(
@@ -423,29 +579,41 @@ private fun SettingsSection(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        shape = MaterialTheme.shapes.medium
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(
-                text = title,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                style = MaterialTheme.typography.titleLarge
-            )
-            
-            if (subtitle != null) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
                 Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = title,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
+                
+                if (subtitle != null) {
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
             
-            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+            HorizontalDivider(
+                modifier = Modifier.padding(vertical = 4.dp),
+                thickness = 1.dp,
+                color = MaterialTheme.colorScheme.outlineVariant
+            )
             
             content()
         }
@@ -634,6 +802,8 @@ private fun ErrorCard(
 
 // State management data class
 private data class SettingsState(
+    val longitude: String,
+    val latitude: String,
     val morningStart: String,
     val morningEnd: String,
     val eveningStart: String,
@@ -657,6 +827,8 @@ private data class SettingsState(
     companion object {
         fun fromConfig(config: AppConfig): SettingsState {
             return SettingsState(
+                longitude = String.format(java.util.Locale.US, "%.4f", config.longitude),
+                latitude = String.format(java.util.Locale.US, "%.3f", config.latitude),
                 morningStart = config.morningCommuteStartHour.toString(),
                 morningEnd = config.morningCommuteEndHour.toString(),
                 eveningStart = config.eveningCommuteStartHour.toString(),
@@ -682,6 +854,8 @@ private data class SettingsState(
     
     fun toConfig(fallbackConfig: AppConfig): AppConfig {
         return AppConfig(
+            longitude = longitude.toDoubleOrNull() ?: fallbackConfig.longitude,
+            latitude = latitude.toDoubleOrNull() ?: fallbackConfig.latitude,
             morningCommuteStartHour = morningStart.toIntOrNull() ?: fallbackConfig.morningCommuteStartHour,
             morningCommuteEndHour = morningEnd.toIntOrNull() ?: fallbackConfig.morningCommuteEndHour,
             eveningCommuteStartHour = eveningStart.toIntOrNull() ?: fallbackConfig.eveningCommuteStartHour,

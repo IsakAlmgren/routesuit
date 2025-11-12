@@ -22,5 +22,9 @@ val appModule = module {
         
         retrofit.create(SmhiApiService::class.java)
     }
+    
+    single<LocationHelper> {
+        LocationHelper(androidContext())
+    }
 }
 

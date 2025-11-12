@@ -57,7 +57,9 @@ fun LeavePreparedTheme(
                 dynamicScheme.copy(
                     background = Blue20,
                     surface = Blue40,
-                    surfaceContainer = Blue60
+                    surfaceContainer = Blue60,
+                    primaryContainer = Blue60,
+                    errorContainer = Red20
                 )
             } else {
                 dynamicScheme

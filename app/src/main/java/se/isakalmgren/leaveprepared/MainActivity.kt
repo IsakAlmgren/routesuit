@@ -20,7 +20,7 @@ import androidx.navigation.compose.rememberNavController
 import se.isakalmgren.leaveprepared.ui.theme.LeavePreparedTheme
 
 class MainActivity : ComponentActivity() {
-    private val requestPermissionLauncher = registerForActivityResult(
+    private val requestNotificationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
@@ -34,7 +34,7 @@ class MainActivity : ComponentActivity() {
         
         // Request notification permission for Android 13+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            requestNotificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
         } else {
             NotificationScheduler.scheduleDailyNotification(this)
         }

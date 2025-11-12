@@ -49,7 +49,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
-    implementation("androidx.compose.material:material-icons-extended")
+    implementation(libs.androidx.compose.material.icons.extended)
     
     // Network
     implementation(libs.retrofit)
@@ -58,6 +58,7 @@ dependencies {
     
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.kotlinx.coroutines.play.services)
     
     // ViewModel
     implementation(libs.androidx.lifecycle.viewmodel.compose)
@@ -71,6 +72,9 @@ dependencies {
     
     // Navigation Compose
     implementation(libs.androidx.navigation.compose)
+    
+    // Location Services
+    implementation("com.google.android.gms:play-services-location:21.3.0")
     
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

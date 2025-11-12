@@ -19,8 +19,17 @@ class WeatherNotificationWorker(
     
     override suspend fun doWork(): Result {
         return try {
-            val response = apiService.getWeatherForecast()
             val appConfig = configRepository.getConfig()
+            val lonStr = String.format(java.util.Locale.US, "%.4f", appConfig.longitude)
+            val latStr = String.format(java.util.Locale.US, "%.3f", appConfig.latitude)
+            val url = "https://opendata-download-metfcst.smhi.se/api/category/snow1g/version/1/geotype/point/lon/$lonStr/lat/$latStr/data.json"
+            android.util.Log.d("WeatherNotificationWorker", "Attempting to fetch weather from URL: $url")
+            android.util.Log.d("WeatherNotificationWorker", "Longitude: ${appConfig.longitude} -> $lonStr, Latitude: ${appConfig.latitude} -> $latStr")
+            
+            val response = apiService.getWeatherForecast(
+                longitude = lonStr,
+                latitude = latStr
+            )
             val recommendations = analyzeWeatherForCommutes(response.timeSeries, appConfig)
             
             sendNotification(recommendations)

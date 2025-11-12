@@ -52,7 +52,16 @@ fun WeatherScreen(
         coroutineScope.launch {
             uiState = WeatherUiState.Loading
             try {
-                val response = apiService.getWeatherForecast()
+                val lonStr = String.format(java.util.Locale.US, "%.4f", appConfig.longitude)
+                val latStr = String.format(java.util.Locale.US, "%.3f", appConfig.latitude)
+                val url = "https://opendata-download-metfcst.smhi.se/api/category/snow1g/version/1/geotype/point/lon/$lonStr/lat/$latStr/data.json"
+                android.util.Log.d("WeatherScreen", "Attempting to fetch weather from URL: $url")
+                android.util.Log.d("WeatherScreen", "Longitude: ${appConfig.longitude} -> $lonStr, Latitude: ${appConfig.latitude} -> $latStr")
+                
+                val response = apiService.getWeatherForecast(
+                    longitude = lonStr,
+                    latitude = latStr
+                )
                 val recommendations = analyzeWeatherForCommutes(response.timeSeries, appConfig)
                 uiState = WeatherUiState.Success(recommendations)
             } catch (e: Exception) {
@@ -75,52 +84,83 @@ fun WeatherScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(16.dp)
                 .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             when (val state = uiState) {
                 is WeatherUiState.Loading -> {
-                    CircularProgressIndicator()
-                    Text("Loading weather forecast...")
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(48.dp),
+                                strokeWidth = 4.dp
+                            )
+                            Text(
+                                text = "Loading weather forecast...",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
                 }
                 
                 is WeatherUiState.Success -> {
-                    if (state.recommendations.morningCommute != null) {
-                        WeatherRecommendationCard(
-                            recommendation = state.recommendations.morningCommute,
-                            title = "To Work",
-                            appConfig = appConfig
-                        )
-                    }
-                    
-                    if (state.recommendations.eveningCommute != null) {
-                        WeatherRecommendationCard(
-                            recommendation = state.recommendations.eveningCommute,
-                            title = "From Work",
-                            appConfig = appConfig
-
-                        )
-                    }
-                    
-                    if (state.recommendations.morningCommute == null && state.recommendations.eveningCommute == null) {
-                        NoCommuteDataCard()
-                    }
-                    
-                    Button(
-                        onClick = { fetchWeather() },
-                        modifier = Modifier.padding(top = 8.dp)
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(20.dp)
                     ) {
-                        Text("Refresh")
+                        if (state.recommendations.morningCommute != null) {
+                            WeatherRecommendationCard(
+                                recommendation = state.recommendations.morningCommute,
+                                title = "To Work",
+                                appConfig = appConfig
+                            )
+                        }
+                        
+                        if (state.recommendations.eveningCommute != null) {
+                            WeatherRecommendationCard(
+                                recommendation = state.recommendations.eveningCommute,
+                                title = "From Work",
+                                appConfig = appConfig
+                            )
+                        }
+                        
+                        if (state.recommendations.morningCommute == null && state.recommendations.eveningCommute == null) {
+                            NoCommuteDataCard()
+                        }
+                        
+                        OutlinedButton(
+                            onClick = { fetchWeather() },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 8.dp, bottom = 16.dp)
+                        ) {
+                            Text("Refresh")
+                        }
                     }
                 }
                 
                 is WeatherUiState.Error -> {
-                    ErrorCard(
-                        message = state.message,
-                        onRetry = { fetchWeather() }
-                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    ) {
+                        ErrorCard(
+                            message = state.message,
+                            onRetry = { fetchWeather() }
+                        )
+                    }
                 }
             }
         }
@@ -135,13 +175,16 @@ fun WeatherRecommendationCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = MaterialTheme.shapes.large
     ) {
         Column(
-            modifier = Modifier.padding(24.dp),
+            modifier = Modifier.padding(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             // Title
             if (title.isNotEmpty()) {
@@ -151,11 +194,12 @@ fun WeatherRecommendationCard(
             // Temperature display
             Text(
                 text = "${String.format("%.1f", recommendation.temperature)}°C",
-                fontSize = 48.sp,
+                fontSize = 56.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                style = MaterialTheme.typography.displayMedium
             )
 
             // Clothing recommendation
@@ -173,20 +217,22 @@ fun WeatherRecommendationCard(
 private fun RecommendationTitle(title: String, dayLabel: String) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.padding(bottom = 8.dp)
+        modifier = Modifier.padding(bottom = 4.dp)
     ) {
         Text(
             text = title,
-            fontSize = 24.sp,
+            fontSize = 22.sp,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
+            color = MaterialTheme.colorScheme.onSurface,
+            style = MaterialTheme.typography.titleLarge
         )
         if (dayLabel.isNotEmpty()) {
             Text(
                 text = dayLabel,
-                fontSize = 16.sp,
-                color = MaterialTheme.colorScheme.secondary,
-                modifier = Modifier.padding(top = 4.dp)
+                fontSize = 14.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 4.dp),
+                style = MaterialTheme.typography.bodyMedium
             )
         }
     }
@@ -199,15 +245,17 @@ private fun ClothingRecommendationCard(clothingMessage: String) {
     ) {
         Text(
             text = "Clothing Recommendation",
-            fontWeight = FontWeight.Bold,
-            fontSize = 18.sp,
-            color = MaterialTheme.colorScheme.onPrimaryContainer
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 16.sp,
+            color = MaterialTheme.colorScheme.onPrimaryContainer,
+            style = MaterialTheme.typography.titleMedium
         )
         Text(
             text = clothingMessage,
             textAlign = TextAlign.Center,
-            modifier = Modifier.padding(top = 8.dp),
-            color = MaterialTheme.colorScheme.onPrimaryContainer
+            modifier = Modifier.padding(top = 10.dp),
+            color = MaterialTheme.colorScheme.onPrimaryContainer,
+            style = MaterialTheme.typography.headlineSmall
         )
     }
 }
@@ -275,12 +323,14 @@ private fun InfoCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = containerColor)
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        colors = CardDefaults.cardColors(containerColor = containerColor),
+        shape = MaterialTheme.shapes.medium
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(18.dp).fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
             content = content
         )
     }
@@ -365,12 +415,17 @@ private fun NoCommuteDataCard() {
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
+        ),
+        shape = MaterialTheme.shapes.medium
     ) {
         Text(
             text = "No commute data available for today",
-            modifier = Modifier.padding(16.dp),
-            textAlign = TextAlign.Center
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
