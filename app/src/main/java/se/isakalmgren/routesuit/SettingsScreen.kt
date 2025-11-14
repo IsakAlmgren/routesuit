@@ -432,44 +432,44 @@ fun SettingsScreen(
                 subtitle = stringResource(R.string.temperature_thresholds_subtitle)
             ) {
                 TemperatureThresholdInput(
-                    label = stringResource(R.string.very_light),
-                    value = settingsState.tempVeryLight,
-                    onValueChange = { settingsState = settingsState.copy(tempVeryLight = it) },
-                    description = stringResource(R.string.very_light_description)
+                    label = stringResource(R.string.hot),
+                    value = settingsState.tempHot,
+                    onValueChange = { settingsState = settingsState.copy(tempHot = it) },
+                    description = stringResource(R.string.hot_description)
                 )
                 
                 TemperatureThresholdInput(
-                    label = stringResource(R.string.light),
-                    value = settingsState.tempLight,
-                    onValueChange = { settingsState = settingsState.copy(tempLight = it) },
-                    description = stringResource(R.string.light_description)
+                    label = stringResource(R.string.warm),
+                    value = settingsState.tempWarm,
+                    onValueChange = { settingsState = settingsState.copy(tempWarm = it) },
+                    description = stringResource(R.string.warm_description)
                 )
                 
                 TemperatureThresholdInput(
-                    label = stringResource(R.string.moderate),
-                    value = settingsState.tempModerate,
-                    onValueChange = { settingsState = settingsState.copy(tempModerate = it) },
-                    description = stringResource(R.string.moderate_description)
+                    label = stringResource(R.string.mild),
+                    value = settingsState.tempMild,
+                    onValueChange = { settingsState = settingsState.copy(tempMild = it) },
+                    description = stringResource(R.string.mild_description)
                 )
                 
                 TemperatureThresholdInput(
                     label = stringResource(R.string.cool),
-                    value = settingsState.tempWarm,
-                    onValueChange = { settingsState = settingsState.copy(tempWarm = it) },
+                    value = settingsState.tempCool,
+                    onValueChange = { settingsState = settingsState.copy(tempCool = it) },
                     description = stringResource(R.string.cool_description)
                 )
                 
                 TemperatureThresholdInput(
                     label = stringResource(R.string.cold),
-                    value = settingsState.tempVeryWarm,
-                    onValueChange = { settingsState = settingsState.copy(tempVeryWarm = it) },
+                    value = settingsState.tempCold,
+                    onValueChange = { settingsState = settingsState.copy(tempCold = it) },
                     description = stringResource(R.string.cold_description)
                 )
                 
                 TemperatureThresholdInput(
                     label = stringResource(R.string.very_cold),
-                    value = settingsState.tempCold,
-                    onValueChange = { settingsState = settingsState.copy(tempCold = it) },
+                    value = settingsState.tempVeryCold,
+                    onValueChange = { settingsState = settingsState.copy(tempVeryCold = it) },
                     description = stringResource(R.string.very_cold_description)
                 )
             }
@@ -549,49 +549,49 @@ fun SettingsScreen(
                     level = 1,
                     value = settingsState.clothingMsg1,
                     onValueChange = { settingsState = settingsState.copy(clothingMsg1 = it) },
-                    threshold = currentConfig.temperatureVeryLight
+                    threshold = currentConfig.temperatureHot
                 )
                 
                 ClothingMessageInput(
                     level = 2,
                     value = settingsState.clothingMsg2,
                     onValueChange = { settingsState = settingsState.copy(clothingMsg2 = it) },
-                    threshold = currentConfig.temperatureLight
+                    threshold = currentConfig.temperatureWarm
                 )
                 
                 ClothingMessageInput(
                     level = 3,
                     value = settingsState.clothingMsg3,
                     onValueChange = { settingsState = settingsState.copy(clothingMsg3 = it) },
-                    threshold = currentConfig.temperatureModerate
+                    threshold = currentConfig.temperatureMild
                 )
                 
                 ClothingMessageInput(
                     level = 4,
                     value = settingsState.clothingMsg4,
                     onValueChange = { settingsState = settingsState.copy(clothingMsg4 = it) },
-                    threshold = currentConfig.temperatureWarm
+                    threshold = currentConfig.temperatureCool
                 )
                 
                 ClothingMessageInput(
                     level = 5,
                     value = settingsState.clothingMsg5,
                     onValueChange = { settingsState = settingsState.copy(clothingMsg5 = it) },
-                    threshold = currentConfig.temperatureVeryWarm
+                    threshold = currentConfig.temperatureCold
                 )
                 
                 ClothingMessageInput(
                     level = 6,
                     value = settingsState.clothingMsg6,
                     onValueChange = { settingsState = settingsState.copy(clothingMsg6 = it) },
-                    threshold = currentConfig.temperatureCold
+                    threshold = currentConfig.temperatureVeryCold
                 )
                 
                 ClothingMessageInput(
                     level = 7,
                     value = settingsState.clothingMsg7,
                     onValueChange = { settingsState = settingsState.copy(clothingMsg7 = it) },
-                    threshold = currentConfig.temperatureCold,
+                    threshold = currentConfig.temperatureVeryCold,
                     isLast = true
                 )
             }
@@ -661,7 +661,7 @@ private fun SettingsSection(
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+            containerColor = MaterialTheme.colorScheme.surface
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
         shape = MaterialTheme.shapes.medium
@@ -892,12 +892,12 @@ private data class SettingsState(
     val morningEnd: String,
     val eveningStart: String,
     val eveningEnd: String,
-    val tempVeryLight: String,
-    val tempLight: String,
-    val tempModerate: String,
+    val tempHot: String,
     val tempWarm: String,
-    val tempVeryWarm: String,
+    val tempMild: String,
+    val tempCool: String,
     val tempCold: String,
+    val tempVeryCold: String,
     val precipProbThreshold: String,
     val precipAmountThreshold: String,
     val clothingMsg1: String,
@@ -917,12 +917,12 @@ private data class SettingsState(
                 morningEnd = config.morningCommuteEndHour.toString(),
                 eveningStart = config.eveningCommuteStartHour.toString(),
                 eveningEnd = config.eveningCommuteEndHour.toString(),
-                tempVeryLight = config.temperatureVeryLight.toString(),
-                tempLight = config.temperatureLight.toString(),
-                tempModerate = config.temperatureModerate.toString(),
+                tempHot = config.temperatureHot.toString(),
                 tempWarm = config.temperatureWarm.toString(),
-                tempVeryWarm = config.temperatureVeryWarm.toString(),
+                tempMild = config.temperatureMild.toString(),
+                tempCool = config.temperatureCool.toString(),
                 tempCold = config.temperatureCold.toString(),
+                tempVeryCold = config.temperatureVeryCold.toString(),
                 precipProbThreshold = config.precipitationProbabilityThreshold.toString(),
                 precipAmountThreshold = config.precipitationAmountThreshold.toString(),
                 clothingMsg1 = config.clothingMessageLevel1,
@@ -944,12 +944,12 @@ private data class SettingsState(
             morningCommuteEndHour = morningEnd.toIntOrNull() ?: fallbackConfig.morningCommuteEndHour,
             eveningCommuteStartHour = eveningStart.toIntOrNull() ?: fallbackConfig.eveningCommuteStartHour,
             eveningCommuteEndHour = eveningEnd.toIntOrNull() ?: fallbackConfig.eveningCommuteEndHour,
-            temperatureVeryLight = tempVeryLight.toDoubleOrNull() ?: fallbackConfig.temperatureVeryLight,
-            temperatureLight = tempLight.toDoubleOrNull() ?: fallbackConfig.temperatureLight,
-            temperatureModerate = tempModerate.toDoubleOrNull() ?: fallbackConfig.temperatureModerate,
+            temperatureHot = tempHot.toDoubleOrNull() ?: fallbackConfig.temperatureHot,
             temperatureWarm = tempWarm.toDoubleOrNull() ?: fallbackConfig.temperatureWarm,
-            temperatureVeryWarm = tempVeryWarm.toDoubleOrNull() ?: fallbackConfig.temperatureVeryWarm,
+            temperatureMild = tempMild.toDoubleOrNull() ?: fallbackConfig.temperatureMild,
+            temperatureCool = tempCool.toDoubleOrNull() ?: fallbackConfig.temperatureCool,
             temperatureCold = tempCold.toDoubleOrNull() ?: fallbackConfig.temperatureCold,
+            temperatureVeryCold = tempVeryCold.toDoubleOrNull() ?: fallbackConfig.temperatureVeryCold,
             precipitationProbabilityThreshold = precipProbThreshold.toDoubleOrNull() ?: fallbackConfig.precipitationProbabilityThreshold,
             precipitationAmountThreshold = precipAmountThreshold.toDoubleOrNull() ?: fallbackConfig.precipitationAmountThreshold,
             clothingMessageLevel1 = clothingMsg1,

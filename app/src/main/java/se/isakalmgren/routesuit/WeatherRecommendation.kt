@@ -38,12 +38,12 @@ enum class ClothingLevel {
 
 fun getClothingLevel(temperature: Double, config: AppConfig): ClothingLevel {
     return when {
-        temperature > config.temperatureVeryLight -> ClothingLevel.LEVEL_1
-        temperature > config.temperatureLight -> ClothingLevel.LEVEL_2
-        temperature > config.temperatureModerate -> ClothingLevel.LEVEL_3
-        temperature > config.temperatureWarm -> ClothingLevel.LEVEL_4
-        temperature > config.temperatureVeryWarm -> ClothingLevel.LEVEL_5
-        temperature > config.temperatureCold -> ClothingLevel.LEVEL_6
+        temperature > config.temperatureHot -> ClothingLevel.LEVEL_1
+        temperature > config.temperatureWarm -> ClothingLevel.LEVEL_2
+        temperature > config.temperatureMild -> ClothingLevel.LEVEL_3
+        temperature > config.temperatureCool -> ClothingLevel.LEVEL_4
+        temperature > config.temperatureCold -> ClothingLevel.LEVEL_5
+        temperature > config.temperatureVeryCold -> ClothingLevel.LEVEL_6
         else -> ClothingLevel.LEVEL_7
     }
 }

@@ -18,13 +18,13 @@ data class AppConfig(
     val eveningCommuteEndHour: Int = 19,
     
     // Temperature thresholds for clothing levels (in Celsius)
-    val temperatureVeryLight: Double = 20.0,      // > 20°C
-    val temperatureLight: Double = 15.0,          // > 15°C
-    val temperatureModerate: Double = 10.0,        // > 10°C
-    val temperatureWarm: Double = 5.0,            // > 5°C
-    val temperatureVeryWarm: Double = 0.0,        // > 0°C
-    val temperatureCold: Double = -5.0,           // > -5°C
-    // Below -5°C is VERY_COLD
+    val temperatureHot: Double = 20.0,            // > 20°C
+    val temperatureWarm: Double = 15.0,           // > 15°C
+    val temperatureMild: Double = 10.0,           // > 10°C
+    val temperatureCool: Double = 5.0,            // > 5°C
+    val temperatureCold: Double = 0.0,            // > 0°C
+    val temperatureVeryCold: Double = -5.0,       // > -5°C
+    // Below -5°C is EXTREMELY_COLD
     
     // Precipitation thresholds
     val precipitationProbabilityThreshold: Double = 20.0,  // Percentage

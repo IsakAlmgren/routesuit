@@ -44,16 +44,16 @@
     <!-- Temperature Thresholds Section -->
     <string name="temperature_thresholds">Temperature Thresholds</string>
     <string name="temperature_thresholds_subtitle">Temperature in °C for clothing recommendations</string>
-    <string name="very_light">Very Light</string>
-    <string name="light">Light</string>
-    <string name="moderate">Moderate</string>
+    <string name="hot">Hot</string>
+    <string name="warm">Warm</string>
+    <string name="mild">Mild</string>
     <string name="cool">Cool</string>
     <string name="cold">Cold</string>
     <string name="very_cold">Very Cold</string>
     <string name="temperature_threshold_label">%1$s (> °C)</string>
-    <string name="very_light_description">Shorts and t-shirt weather</string>
-    <string name="light_description">T-shirt with light jacket</string>
-    <string name="moderate_description">Long sleeves and light jacket</string>
+    <string name="hot_description">Shorts and t-shirt weather</string>
+    <string name="warm_description">T-shirt with light jacket</string>
+    <string name="mild_description">Long sleeves and light jacket</string>
     <string name="cool_description">Sweater and jacket recommended</string>
     <string name="cold_description">Heavy jacket and layers needed</string>
     <string name="very_cold_description">Winter coat and warm layers</string>

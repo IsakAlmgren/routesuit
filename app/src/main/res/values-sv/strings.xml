@@ -44,18 +44,18 @@
     <!-- Temperature Thresholds Section -->
     <string name="temperature_thresholds">Temperaturtrösklar</string>
     <string name="temperature_thresholds_subtitle">Temperatur i °C för klädrekommendationer</string>
-    <string name="very_light">Mycket lätt</string>
-    <string name="light">Lätt</string>
-    <string name="moderate">Måttlig</string>
-    <string name="cool">Sval</string>
-    <string name="cold">Kall</string>
-    <string name="very_cold">Mycket kall</string>
+    <string name="hot">Mycket varmt</string>
+    <string name="warm">Varmt</string>
+    <string name="mild">Behagligt</string>
+    <string name="cool">Kyligt</string>
+    <string name="cold">Kallt</string>
+    <string name="very_cold">Mycket kallt</string>
     <string name="temperature_threshold_label">%1$s (> °C)</string>
-    <string name="very_light_description">Shorts och t-shirt väder</string>
-    <string name="light_description">T-shirt med lätt jacka</string>
-    <string name="moderate_description">Långärmat och lätt jacka</string>
-    <string name="cool_description">Tröja och jacka rekommenderas</string>
-    <string name="cold_description">Tjock jacka och lager behövs</string>
+    <string name="hot_description">Shorts och t-shirt</string>
+    <string name="warm_description">T-shirt och lätt jacka</string>
+    <string name="mild_description">Långärmat och lätt jacka</string>
+    <string name="cool_description">Tröja och jacka</string>
+    <string name="cold_description">Tjock jacka och lager</string>
     <string name="very_cold_description">Vinterjacka och varma lager</string>
     
     <!-- Precipitation Thresholds Section -->
