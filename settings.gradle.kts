@@ -19,6 +19,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Leave Prepared"
+rootProject.name = "RouteSuit"
 include(":app")
  

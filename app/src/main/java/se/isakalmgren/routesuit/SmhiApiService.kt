@@ -1,4 +1,4 @@
-package se.isakalmgren.leaveprepared
+package se.isakalmgren.routesuit
 
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory

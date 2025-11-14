@@ -1,4 +1,4 @@
-package se.isakalmgren.leaveprepared.ui.theme
+package se.isakalmgren.routesuit.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

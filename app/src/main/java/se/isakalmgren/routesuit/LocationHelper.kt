@@ -1,4 +1,4 @@
-package se.isakalmgren.leaveprepared
+package se.isakalmgren.routesuit
 
 import android.Manifest
 import android.content.Context

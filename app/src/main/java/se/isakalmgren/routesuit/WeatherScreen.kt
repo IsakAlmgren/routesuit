@@ -1,4 +1,4 @@
-package se.isakalmgren.leaveprepared
+package se.isakalmgren.routesuit
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -26,7 +26,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.koin.compose.koinInject
-import se.isakalmgren.leaveprepared.ui.theme.LeavePreparedTheme
+import se.isakalmgren.routesuit.ui.theme.RouteSuitTheme
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalContext
 
@@ -438,7 +438,7 @@ private fun NoCommuteDataCard() {
 @Preview(showBackground = true, name = "Morning Commute - Rain Expected")
 @Composable
 fun WeatherRecommendationCardPreview_MorningRain() {
-    LeavePreparedTheme(darkTheme = true) {
+    RouteSuitTheme(darkTheme = true) {
         val context = LocalContext.current
         val appConfig = AppConfig()
         val recommendationBase = WeatherRecommendation(
@@ -464,7 +464,7 @@ fun WeatherRecommendationCardPreview_MorningRain() {
 @Preview(showBackground = true, name = "Morning Commute - Rain for Later")
 @Composable
 fun WeatherRecommendationCardPreview_MorningRainForLater() {
-    LeavePreparedTheme {
+    RouteSuitTheme {
         val context = LocalContext.current
         val appConfig = AppConfig()
         val recommendationBase = WeatherRecommendation(
@@ -490,7 +490,7 @@ fun WeatherRecommendationCardPreview_MorningRainForLater() {
 @Preview(showBackground = true, name = "Morning Commute - No Rain")
 @Composable
 fun WeatherRecommendationCardPreview_MorningNoRain() {
-    LeavePreparedTheme {
+    RouteSuitTheme {
         val context = LocalContext.current
         val appConfig = AppConfig()
         val recommendationBase = WeatherRecommendation(
@@ -516,7 +516,7 @@ fun WeatherRecommendationCardPreview_MorningNoRain() {
 @Preview(showBackground = true, name = "Evening Commute - Rain")
 @Composable
 fun WeatherRecommendationCardPreview_EveningRain() {
-    LeavePreparedTheme {
+    RouteSuitTheme {
         val context = LocalContext.current
         val appConfig = AppConfig()
         val recommendationBase = WeatherRecommendation(
@@ -542,7 +542,7 @@ fun WeatherRecommendationCardPreview_EveningRain() {
 @Preview(showBackground = true, name = "Evening Commute - No Rain")
 @Composable
 fun WeatherRecommendationCardPreview_EveningNoRain() {
-    LeavePreparedTheme {
+    RouteSuitTheme {
         val context = LocalContext.current
         val appConfig = AppConfig()
         val recommendationBase = WeatherRecommendation(
@@ -568,7 +568,7 @@ fun WeatherRecommendationCardPreview_EveningNoRain() {
 @Preview(showBackground = true, name = "Success State - Both Commutes")
 @Composable
 fun WeatherScreenPreview_Success() {
-    LeavePreparedTheme {
+    RouteSuitTheme {
         val context = LocalContext.current
         val appConfig = AppConfig()
         Surface(modifier = Modifier.fillMaxSize()) {
@@ -632,7 +632,7 @@ fun WeatherScreenPreview_Success() {
 @Preview(showBackground = true, name = "Loading State")
 @Composable
 fun WeatherScreenPreview_Loading() {
-    LeavePreparedTheme {
+    RouteSuitTheme {
         Surface(modifier = Modifier.fillMaxSize()) {
             Column(
                 modifier = Modifier
@@ -651,7 +651,7 @@ fun WeatherScreenPreview_Loading() {
 @Preview(showBackground = true, name = "Error State")
 @Composable
 fun WeatherScreenPreview_Error() {
-    LeavePreparedTheme {
+    RouteSuitTheme {
         Surface(modifier = Modifier.fillMaxSize()) {
             Column(
                 modifier = Modifier
@@ -672,7 +672,7 @@ fun WeatherScreenPreview_Error() {
 @Preview(showBackground = true, name = "Top App Bar")
 @Composable
 fun WeatherTopAppBarPreview() {
-    LeavePreparedTheme {
+    RouteSuitTheme {
         Scaffold(
             topBar = {
                 WeatherTopAppBar(onSettingsClick = {})

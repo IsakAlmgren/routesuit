@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "se.isakalmgren.leaveprepared"
+    namespace = "se.isakalmgren.routesuit"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "se.isakalmgren.leaveprepared"
+        applicationId = "se.isakalmgren.routesuit"
         minSdk = 31
         targetSdk = 36
         versionCode = 1

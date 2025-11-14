@@ -1,4 +1,4 @@
-package se.isakalmgren.leaveprepared
+package se.isakalmgren.routesuit
 
 import android.Manifest
 import android.os.Build
@@ -17,7 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import se.isakalmgren.leaveprepared.ui.theme.LeavePreparedTheme
+import se.isakalmgren.routesuit.ui.theme.RouteSuitTheme
 import android.content.Context
 import android.content.res.Configuration
 
@@ -60,7 +60,7 @@ class MainActivity : ComponentActivity() {
         }
         
         setContent {
-            LeavePreparedTheme {
+            RouteSuitTheme {
                 val navController = rememberNavController()
                 
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->

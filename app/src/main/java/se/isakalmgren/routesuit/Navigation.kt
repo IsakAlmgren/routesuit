@@ -1,4 +1,4 @@
-package se.isakalmgren.leaveprepared
+package se.isakalmgren.routesuit
 
 sealed class Screen(val route: String) {
     data object Weather : Screen("weather")

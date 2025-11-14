@@ -1,4 +1,4 @@
-package se.isakalmgren.leaveprepared
+package se.isakalmgren.routesuit
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*

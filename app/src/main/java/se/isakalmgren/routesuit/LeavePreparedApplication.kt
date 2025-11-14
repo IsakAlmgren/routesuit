@@ -1,15 +1,15 @@
-package se.isakalmgren.leaveprepared
+package se.isakalmgren.routesuit
 
 import android.app.Application
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 
-class LeavePreparedApplication : Application() {
+class RouteSuitApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         
         startKoin {
-            androidContext(this@LeavePreparedApplication)
+            androidContext(this@RouteSuitApplication)
             modules(appModule)
         }
     }

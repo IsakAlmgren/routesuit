@@ -1,4 +1,4 @@
-package se.isakalmgren.leaveprepared
+package se.isakalmgren.routesuit
 
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module

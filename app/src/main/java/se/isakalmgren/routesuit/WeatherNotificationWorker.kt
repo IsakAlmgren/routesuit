@@ -1,4 +1,4 @@
-package se.isakalmgren.leaveprepared
+package se.isakalmgren.routesuit
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
