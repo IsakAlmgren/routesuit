@@ -142,6 +142,10 @@
     <string name="friday">Friday</string>
     <string name="saturday">Saturday</string>
     <string name="sunday">Sunday</string>
+    <string name="test_notification">Test Notification</string>
+    <string name="testing_notification">Testing…</string>
+    <string name="test_notification_sent">Test notification sent!</string>
+    <string name="failed_to_test_notification">Failed to test notification: %1$s</string>
     
     <!-- Content Descriptions -->
     <string name="content_description_app_icon">App Icon</string>

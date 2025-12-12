@@ -28,6 +28,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import android.app.Activity
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
+import androidx.core.app.NotificationCompat
 import java.util.Calendar
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -37,6 +43,7 @@ fun SettingsScreen(
     configRepository: ConfigRepository = koinInject(),
     locationHelper: LocationHelper = koinInject(),
     languageRepository: LanguageRepository = koinInject(),
+    apiService: SmhiApiService = koinInject(),
     modifier: Modifier = Modifier
 ) {
     val configState = configRepository.config.collectAsState()
@@ -54,6 +61,7 @@ fun SettingsScreen(
     var showResetDialog by remember { mutableStateOf(false) }
     var showExitDialog by remember { mutableStateOf(false) }
     var isFetchingLocation by remember { mutableStateOf(false) }
+    var isTestingNotification by remember { mutableStateOf(false) }
     
     // Permission launcher for location
     val locationPermissionLauncherInternal = rememberLauncherForActivityResult(
@@ -591,6 +599,47 @@ fun SettingsScreen(
                         )
                     }
                 }
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                Button(
+                    onClick = {
+                        coroutineScope.launch {
+                            isTestingNotification = true
+                            try {
+                                val appConfig = configRepository.getConfig()
+                                val lonStr = String.format(java.util.Locale.US, "%.4f", appConfig.longitude)
+                                val latStr = String.format(java.util.Locale.US, "%.3f", appConfig.latitude)
+                                
+                                val response = apiService.getWeatherForecast(
+                                    longitude = lonStr,
+                                    latitude = latStr
+                                )
+                                val recommendations = analyzeWeatherForCommutes(response.timeSeries, appConfig, context)
+                                sendTestNotification(context, recommendations)
+                                showError = null
+                                // The notification itself serves as feedback
+                            } catch (e: Exception) {
+                                showError = context.getString(R.string.failed_to_test_notification, e.message ?: "")
+                            } finally {
+                                isTestingNotification = false
+                            }
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !isTestingNotification
+                ) {
+                    if (isTestingNotification) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(stringResource(R.string.testing_notification))
+                    } else {
+                        Text(stringResource(R.string.test_notification))
+                    }
+                }
             }
             
             Spacer(modifier = Modifier.height(20.dp))
@@ -937,6 +986,76 @@ private fun ErrorCard(
             }
         }
     }
+}
+
+// Helper function to send test notification
+private fun sendTestNotification(context: Context, recommendations: CommuteRecommendations) {
+    val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    
+    // Create notification channel for Android O and above
+    val channelId = "weather_forecast_channel"
+    val channelName = context.getString(R.string.notification_channel_name)
+    val importance = NotificationManager.IMPORTANCE_DEFAULT
+    val channel = NotificationChannel(channelId, channelName, importance)
+    notificationManager.createNotificationChannel(channel)
+    
+    // Build notification message with both commutes
+    val message = buildString {
+        if (recommendations.morningCommute != null) {
+            append(context.getString(R.string.notification_to_work))
+            append(context.getString(R.string.temperature_format, recommendations.morningCommute.temperature))
+            if (recommendations.morningCommute.needsRainClothes) {
+                if (recommendations.morningCommute.rainForLater) {
+                    append(context.getString(R.string.notification_bring_rain_gear_later))
+                } else {
+                    append(context.getString(R.string.notification_rain_clothes_needed))
+                }
+            }
+            if (recommendations.eveningCommute != null) {
+                append("\n")
+            }
+        }
+        if (recommendations.eveningCommute != null) {
+            append(context.getString(R.string.notification_from_work))
+            append(context.getString(R.string.temperature_format, recommendations.eveningCommute.temperature))
+            if (recommendations.eveningCommute.needsRainClothes) {
+                append(context.getString(R.string.notification_rain_clothes_needed))
+            }
+        }
+    }
+    
+    // Determine if rain clothes are needed for either commute
+    val needsRainClothes = recommendations.morningCommute?.needsRainClothes == true || 
+                           recommendations.eveningCommute?.needsRainClothes == true
+    
+    val title = if (needsRainClothes) {
+        context.getString(R.string.bring_rain_clothes_today)
+    } else {
+        context.getString(R.string.weather_update)
+    }
+    
+    // Create intent to open MainActivity when notification is tapped
+    val intent = Intent(context, MainActivity::class.java).apply {
+        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+    }
+    val pendingIntent = PendingIntent.getActivity(
+        context,
+        0,
+        intent,
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+    )
+    
+    val notification = NotificationCompat.Builder(context, channelId)
+        .setSmallIcon(android.R.drawable.ic_dialog_info)
+        .setContentTitle(title)
+        .setContentText(message)
+        .setStyle(NotificationCompat.BigTextStyle().bigText(message))
+        .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+        .setAutoCancel(true)
+        .setContentIntent(pendingIntent)
+        .build()
+    
+    notificationManager.notify(999, notification) // Use different ID (999) for test notifications
 }
 
 // State management data class
