@@ -41,23 +41,6 @@
     <string name="start_hour">Start Hour</string>
     <string name="end_hour">End Hour</string>
     
-    <!-- Temperature Thresholds Section -->
-    <string name="temperature_thresholds">Temperature Thresholds</string>
-    <string name="temperature_thresholds_subtitle">Temperature in °C for clothing recommendations</string>
-    <string name="hot">Hot</string>
-    <string name="warm">Warm</string>
-    <string name="mild">Mild</string>
-    <string name="cool">Cool</string>
-    <string name="cold">Cold</string>
-    <string name="very_cold">Very Cold</string>
-    <string name="temperature_threshold_label">%1$s (> °C)</string>
-    <string name="hot_description">Shorts and t-shirt weather</string>
-    <string name="warm_description">T-shirt with light jacket</string>
-    <string name="mild_description">Long sleeves and light jacket</string>
-    <string name="cool_description">Sweater and jacket recommended</string>
-    <string name="cold_description">Heavy jacket and layers needed</string>
-    <string name="very_cold_description">Winter coat and warm layers</string>
-    
     <!-- Precipitation Thresholds Section -->
     <string name="precipitation_thresholds">Precipitation Thresholds</string>
     <string name="precipitation_thresholds_subtitle">When to recommend rain clothes</string>
@@ -65,13 +48,6 @@
     <string name="amount_threshold_mm">Amount Threshold (mm)</string>
     <string name="probability_threshold_hint">Minimum probability to recommend rain clothes</string>
     <string name="amount_threshold_hint">Minimum expected precipitation amount</string>
-    
-    <!-- Clothing Messages Section -->
-    <string name="clothing_messages">Clothing Messages</string>
-    <string name="clothing_messages_subtitle">Customize messages for each clothing level</string>
-    <string name="clothing_level_label">Level %1$d (> %2$.1f°C)</string>
-    <string name="clothing_level_label_last">Level %1$d (&lt; %2$.1f°C)</string>
-    <string name="message_cannot_be_empty">Message cannot be empty</string>
     
     <!-- Validation Messages -->
     <string name="required">Required</string>
@@ -96,7 +72,6 @@
     <string name="failed_to_fetch_weather">Failed to fetch weather: %1$s</string>
     
     <!-- Weather Recommendation Cards -->
-    <string name="clothing_recommendation">Clothing Recommendation</string>
     <string name="bring_rain_clothes">🌧️ Rain Clothes Needed!</string>
     <string name="bring_rain_clothes_later">🌧️ Bring Rain Clothes for Later!</string>
     <string name="rain_expected_later">Rain expected on your way home</string>

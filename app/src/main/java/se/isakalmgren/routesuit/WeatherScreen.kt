@@ -126,16 +126,14 @@ fun WeatherScreen(
                         if (state.recommendations.morningCommute != null) {
                             WeatherRecommendationCard(
                                 recommendation = state.recommendations.morningCommute,
-                                title = stringResource(R.string.to_work),
-                                appConfig = appConfig
+                                title = stringResource(R.string.to_work)
                             )
                         }
                         
                         if (state.recommendations.eveningCommute != null) {
                             WeatherRecommendationCard(
                                 recommendation = state.recommendations.eveningCommute,
-                                title = stringResource(R.string.from_work),
-                                appConfig = appConfig
+                                title = stringResource(R.string.from_work)
                             )
                         }
                         
@@ -174,8 +172,7 @@ fun WeatherScreen(
 @Composable
 fun WeatherRecommendationCard(
     recommendation: WeatherRecommendation,
-    title: String = "",
-    appConfig: AppConfig
+    title: String = ""
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -204,11 +201,6 @@ fun WeatherRecommendationCard(
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth(),
                 style = MaterialTheme.typography.displayMedium
-            )
-
-            // Clothing recommendation
-            ClothingRecommendationCard(
-                clothingMessage = getClothingMessage(recommendation.clothingLevel, appConfig)
             )
             
             // Rain clothes recommendation
@@ -239,28 +231,6 @@ private fun RecommendationTitle(title: String, dayLabel: String) {
                 style = MaterialTheme.typography.bodyMedium
             )
         }
-    }
-}
-
-@Composable
-private fun ClothingRecommendationCard(clothingMessage: String) {
-    InfoCard(
-        containerColor = MaterialTheme.colorScheme.primaryContainer,
-    ) {
-        Text(
-            text = stringResource(R.string.clothing_recommendation),
-            fontWeight = FontWeight.SemiBold,
-            fontSize = 16.sp,
-            color = MaterialTheme.colorScheme.onPrimaryContainer,
-            style = MaterialTheme.typography.titleMedium
-        )
-        Text(
-            text = clothingMessage,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(top = 10.dp),
-            color = MaterialTheme.colorScheme.onPrimaryContainer,
-            style = MaterialTheme.typography.headlineSmall
-        )
     }
 }
 
@@ -443,7 +413,6 @@ fun WeatherRecommendationCardPreview_MorningRain() {
         val appConfig = AppConfig()
         val recommendationBase = WeatherRecommendation(
             needsRainClothes = true,
-            clothingLevel = ClothingLevel.LEVEL_4,
             temperature = 8.5,
             precipitationProbability = 75.0,
             precipitationAmount = 2.3,
@@ -455,8 +424,7 @@ fun WeatherRecommendationCardPreview_MorningRain() {
         val recommendation = recommendationBase.copy(message = generateRecommendationMessage(recommendationBase, appConfig, context))
         WeatherRecommendationCard(
             recommendation = recommendation,
-            title = "To Work",
-            appConfig = appConfig
+            title = "To Work"
         )
     }
 }
@@ -469,7 +437,6 @@ fun WeatherRecommendationCardPreview_MorningRainForLater() {
         val appConfig = AppConfig()
         val recommendationBase = WeatherRecommendation(
             needsRainClothes = true,
-            clothingLevel = ClothingLevel.LEVEL_3,
             temperature = 12.0,
             precipitationProbability = 80.0, // Evening commute's precipitation probability
             precipitationAmount = 1.5, // Evening commute's precipitation amount
@@ -481,8 +448,7 @@ fun WeatherRecommendationCardPreview_MorningRainForLater() {
         val recommendation = recommendationBase.copy(message = generateRecommendationMessage(recommendationBase, appConfig, context))
         WeatherRecommendationCard(
             recommendation = recommendation,
-            title = "To Work",
-            appConfig = appConfig
+            title = "To Work"
         )
     }
 }
@@ -495,7 +461,6 @@ fun WeatherRecommendationCardPreview_MorningNoRain() {
         val appConfig = AppConfig()
         val recommendationBase = WeatherRecommendation(
             needsRainClothes = false,
-            clothingLevel = ClothingLevel.LEVEL_2,
             temperature = 18.0,
             precipitationProbability = 10.0,
             precipitationAmount = 0.0,
@@ -507,8 +472,7 @@ fun WeatherRecommendationCardPreview_MorningNoRain() {
         val recommendation = recommendationBase.copy(message = generateRecommendationMessage(recommendationBase, appConfig, context))
         WeatherRecommendationCard(
             recommendation = recommendation,
-            title = "To Work",
-            appConfig = appConfig
+            title = "To Work"
         )
     }
 }
@@ -521,7 +485,6 @@ fun WeatherRecommendationCardPreview_EveningRain() {
         val appConfig = AppConfig()
         val recommendationBase = WeatherRecommendation(
             needsRainClothes = true,
-            clothingLevel = ClothingLevel.LEVEL_6,
             temperature = -2.0,
             precipitationProbability = 90.0,
             precipitationAmount = 5.0,
@@ -533,8 +496,7 @@ fun WeatherRecommendationCardPreview_EveningRain() {
         val recommendation = recommendationBase.copy(message = generateRecommendationMessage(recommendationBase, appConfig, context))
         WeatherRecommendationCard(
             recommendation = recommendation,
-            title = "From Work",
-            appConfig = appConfig
+            title = "From Work"
         )
     }
 }
@@ -547,7 +509,6 @@ fun WeatherRecommendationCardPreview_EveningNoRain() {
         val appConfig = AppConfig()
         val recommendationBase = WeatherRecommendation(
             needsRainClothes = false,
-            clothingLevel = ClothingLevel.LEVEL_1,
             temperature = 25.0,
             precipitationProbability = 5.0,
             precipitationAmount = 0.0,
@@ -559,8 +520,7 @@ fun WeatherRecommendationCardPreview_EveningNoRain() {
         val recommendation = recommendationBase.copy(message = generateRecommendationMessage(recommendationBase, appConfig, context))
         WeatherRecommendationCard(
             recommendation = recommendation,
-            title = "From Work",
-            appConfig = appConfig
+            title = "From Work"
         )
     }
 }
@@ -582,7 +542,6 @@ fun WeatherScreenPreview_Success() {
             ) {
                 val morningRecommendationBase = WeatherRecommendation(
                     needsRainClothes = true,
-                    clothingLevel = ClothingLevel.LEVEL_4,
                     temperature = 8.5,
                     precipitationProbability = 75.0,
                     precipitationAmount = 2.3,
@@ -595,7 +554,6 @@ fun WeatherScreenPreview_Success() {
                 
                 val eveningRecommendationBase = WeatherRecommendation(
                     needsRainClothes = false,
-                    clothingLevel = ClothingLevel.LEVEL_3,
                     temperature = 10.0,
                     precipitationProbability = 20.0,
                     precipitationAmount = 0.0,
@@ -608,14 +566,12 @@ fun WeatherScreenPreview_Success() {
                 
                 WeatherRecommendationCard(
                     recommendation = morningRecommendation,
-                    title = "To Work",
-                    appConfig = appConfig
+                    title = "To Work"
                 )
                 
                 WeatherRecommendationCard(
                     recommendation = eveningRecommendation,
-                    title = "From Work",
-                    appConfig = appConfig
+                    title = "From Work"
                 )
                 
                 Button(

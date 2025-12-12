@@ -10,7 +10,6 @@ import java.util.Locale
 
 data class WeatherRecommendation(
     val needsRainClothes: Boolean,
-    val clothingLevel: ClothingLevel,
     val temperature: Double,
     val precipitationProbability: Double,
     val precipitationAmount: Double,
@@ -26,53 +25,16 @@ data class CommuteRecommendations(
     val eveningCommute: WeatherRecommendation?
 )
 
-enum class ClothingLevel {
-    LEVEL_1,  // > 20°C
-    LEVEL_2,  // 15-20°C
-    LEVEL_3,  // 10-15°C
-    LEVEL_4,  // 5-10°C
-    LEVEL_5,  // 0-5°C
-    LEVEL_6,  // -5 to 0°C
-    LEVEL_7   // < -5°C
-}
-
-fun getClothingLevel(temperature: Double, config: AppConfig): ClothingLevel {
-    return when {
-        temperature > config.temperatureHot -> ClothingLevel.LEVEL_1
-        temperature > config.temperatureWarm -> ClothingLevel.LEVEL_2
-        temperature > config.temperatureMild -> ClothingLevel.LEVEL_3
-        temperature > config.temperatureCool -> ClothingLevel.LEVEL_4
-        temperature > config.temperatureCold -> ClothingLevel.LEVEL_5
-        temperature > config.temperatureVeryCold -> ClothingLevel.LEVEL_6
-        else -> ClothingLevel.LEVEL_7
-    }
-}
-
-fun getClothingMessage(level: ClothingLevel, config: AppConfig): String {
-    return when (level) {
-        ClothingLevel.LEVEL_1 -> config.clothingMessageLevel1
-        ClothingLevel.LEVEL_2 -> config.clothingMessageLevel2
-        ClothingLevel.LEVEL_3 -> config.clothingMessageLevel3
-        ClothingLevel.LEVEL_4 -> config.clothingMessageLevel4
-        ClothingLevel.LEVEL_5 -> config.clothingMessageLevel5
-        ClothingLevel.LEVEL_6 -> config.clothingMessageLevel6
-        ClothingLevel.LEVEL_7 -> config.clothingMessageLevel7
-    }
-}
-
 /**
  * Generates the recommendation message for a WeatherRecommendation.
  * 
  * @param recommendation The weather recommendation to generate a message for
- * @param config The app configuration containing thresholds and clothing messages
+ * @param config The app configuration containing thresholds
  * @param context The context to access string resources
  * @return The formatted recommendation message
  */
 fun generateRecommendationMessage(recommendation: WeatherRecommendation, config: AppConfig, context: Context): String {
-    val clothingMessage = getClothingMessage(recommendation.clothingLevel, config)
-    
     return buildString {
-        append(clothingMessage)
         if (recommendation.needsRainClothes) {
             if (recommendation.rainForLater) {
                 // Rain for later case - use the recommendation's precipitation values
@@ -174,13 +136,10 @@ fun analyzeWeatherForCommute(
     val needsRainClothes = maxPrecipitationProb > config.precipitationProbabilityThreshold || 
                           maxPrecipitationAmount > config.precipitationAmountThreshold
     
-    val clothingLevel = getClothingLevel(avgTemperature, config)
-    
     val dayLabel = getDayLabel(commuteDate, currentDate, context)
     
     val recommendation = WeatherRecommendation(
         needsRainClothes = needsRainClothes,
-        clothingLevel = clothingLevel,
         temperature = avgTemperature,
         precipitationProbability = maxPrecipitationProb,
         precipitationAmount = maxPrecipitationAmount,

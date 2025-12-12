@@ -435,56 +435,6 @@ fun SettingsScreen(
             
             Spacer(modifier = Modifier.height(20.dp))
             
-            // Temperature Thresholds Section
-            SettingsSection(
-                title = stringResource(R.string.temperature_thresholds),
-                subtitle = stringResource(R.string.temperature_thresholds_subtitle)
-            ) {
-                TemperatureThresholdInput(
-                    label = stringResource(R.string.hot),
-                    value = settingsState.tempHot,
-                    onValueChange = { settingsState = settingsState.copy(tempHot = it) },
-                    description = stringResource(R.string.hot_description)
-                )
-                
-                TemperatureThresholdInput(
-                    label = stringResource(R.string.warm),
-                    value = settingsState.tempWarm,
-                    onValueChange = { settingsState = settingsState.copy(tempWarm = it) },
-                    description = stringResource(R.string.warm_description)
-                )
-                
-                TemperatureThresholdInput(
-                    label = stringResource(R.string.mild),
-                    value = settingsState.tempMild,
-                    onValueChange = { settingsState = settingsState.copy(tempMild = it) },
-                    description = stringResource(R.string.mild_description)
-                )
-                
-                TemperatureThresholdInput(
-                    label = stringResource(R.string.cool),
-                    value = settingsState.tempCool,
-                    onValueChange = { settingsState = settingsState.copy(tempCool = it) },
-                    description = stringResource(R.string.cool_description)
-                )
-                
-                TemperatureThresholdInput(
-                    label = stringResource(R.string.cold),
-                    value = settingsState.tempCold,
-                    onValueChange = { settingsState = settingsState.copy(tempCold = it) },
-                    description = stringResource(R.string.cold_description)
-                )
-                
-                TemperatureThresholdInput(
-                    label = stringResource(R.string.very_cold),
-                    value = settingsState.tempVeryCold,
-                    onValueChange = { settingsState = settingsState.copy(tempVeryCold = it) },
-                    description = stringResource(R.string.very_cold_description)
-                )
-            }
-            
-            Spacer(modifier = Modifier.height(20.dp))
-            
             // Precipitation Thresholds Section
             SettingsSection(
                 title = stringResource(R.string.precipitation_thresholds),
@@ -640,64 +590,6 @@ fun SettingsScreen(
                         Text(stringResource(R.string.test_notification))
                     }
                 }
-            }
-            
-            Spacer(modifier = Modifier.height(20.dp))
-            
-            // Clothing Messages Section
-            SettingsSection(
-                title = stringResource(R.string.clothing_messages),
-                subtitle = stringResource(R.string.clothing_messages_subtitle)
-            ) {
-                ClothingMessageInput(
-                    level = 1,
-                    value = settingsState.clothingMsg1,
-                    onValueChange = { settingsState = settingsState.copy(clothingMsg1 = it) },
-                    threshold = currentConfig.temperatureHot
-                )
-                
-                ClothingMessageInput(
-                    level = 2,
-                    value = settingsState.clothingMsg2,
-                    onValueChange = { settingsState = settingsState.copy(clothingMsg2 = it) },
-                    threshold = currentConfig.temperatureWarm
-                )
-                
-                ClothingMessageInput(
-                    level = 3,
-                    value = settingsState.clothingMsg3,
-                    onValueChange = { settingsState = settingsState.copy(clothingMsg3 = it) },
-                    threshold = currentConfig.temperatureMild
-                )
-                
-                ClothingMessageInput(
-                    level = 4,
-                    value = settingsState.clothingMsg4,
-                    onValueChange = { settingsState = settingsState.copy(clothingMsg4 = it) },
-                    threshold = currentConfig.temperatureCool
-                )
-                
-                ClothingMessageInput(
-                    level = 5,
-                    value = settingsState.clothingMsg5,
-                    onValueChange = { settingsState = settingsState.copy(clothingMsg5 = it) },
-                    threshold = currentConfig.temperatureCold
-                )
-                
-                ClothingMessageInput(
-                    level = 6,
-                    value = settingsState.clothingMsg6,
-                    onValueChange = { settingsState = settingsState.copy(clothingMsg6 = it) },
-                    threshold = currentConfig.temperatureVeryCold
-                )
-                
-                ClothingMessageInput(
-                    level = 7,
-                    value = settingsState.clothingMsg7,
-                    onValueChange = { settingsState = settingsState.copy(clothingMsg7 = it) },
-                    threshold = currentConfig.temperatureVeryCold,
-                    isLast = true
-                )
             }
             
             Spacer(modifier = Modifier.height(80.dp)) // Space for bottom bar
@@ -869,78 +761,6 @@ private fun CommuteTimeInput(
 }
 
 @Composable
-private fun TemperatureThresholdInput(
-    label: String,
-    value: String,
-    onValueChange: (String) -> Unit,
-    description: String
-) {
-    val context = LocalContext.current
-    val error = remember(value) {
-        val temp = value.toDoubleOrNull()
-        when {
-            value.isBlank() -> context.getString(R.string.required)
-            temp == null -> context.getString(R.string.invalid_number)
-            else -> null
-        }
-    }
-    
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        label = { Text(stringResource(R.string.temperature_threshold_label, label)) },
-        modifier = Modifier.fillMaxWidth(),
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-        singleLine = true,
-        isError = error != null,
-        supportingText = {
-            if (error != null) {
-                Text(error, color = MaterialTheme.colorScheme.error)
-            } else {
-                Text(description)
-            }
-        }
-    )
-}
-
-@Composable
-private fun ClothingMessageInput(
-    level: Int,
-    value: String,
-    onValueChange: (String) -> Unit,
-    threshold: Double,
-    isLast: Boolean = false
-) {
-    val context = LocalContext.current
-    val error = remember(value) {
-        if (value.isBlank()) context.getString(R.string.message_cannot_be_empty) else null
-    }
-    
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        label = {
-            Text(
-                if (isLast) {
-                    stringResource(R.string.clothing_level_label_last, level, threshold)
-                } else {
-                    stringResource(R.string.clothing_level_label, level, threshold)
-                }
-            )
-        },
-        modifier = Modifier.fillMaxWidth(),
-        maxLines = 3,
-        minLines = 1,
-        isError = error != null,
-        supportingText = error?.let { { Text(it, color = MaterialTheme.colorScheme.error) } }
-    )
-    
-    if (!isLast) {
-        Spacer(modifier = Modifier.height(8.dp))
-    }
-}
-
-@Composable
 private fun SuccessCard(
     message: String,
     modifier: Modifier = Modifier
@@ -1066,21 +886,8 @@ private data class SettingsState(
     val morningEnd: String,
     val eveningStart: String,
     val eveningEnd: String,
-    val tempHot: String,
-    val tempWarm: String,
-    val tempMild: String,
-    val tempCool: String,
-    val tempCold: String,
-    val tempVeryCold: String,
     val precipProbThreshold: String,
     val precipAmountThreshold: String,
-    val clothingMsg1: String,
-    val clothingMsg2: String,
-    val clothingMsg3: String,
-    val clothingMsg4: String,
-    val clothingMsg5: String,
-    val clothingMsg6: String,
-    val clothingMsg7: String,
     val notificationDays: Set<Int>
 ) {
     companion object {
@@ -1092,21 +899,8 @@ private data class SettingsState(
                 morningEnd = config.morningCommuteEndHour.toString(),
                 eveningStart = config.eveningCommuteStartHour.toString(),
                 eveningEnd = config.eveningCommuteEndHour.toString(),
-                tempHot = config.temperatureHot.toString(),
-                tempWarm = config.temperatureWarm.toString(),
-                tempMild = config.temperatureMild.toString(),
-                tempCool = config.temperatureCool.toString(),
-                tempCold = config.temperatureCold.toString(),
-                tempVeryCold = config.temperatureVeryCold.toString(),
                 precipProbThreshold = config.precipitationProbabilityThreshold.toString(),
                 precipAmountThreshold = config.precipitationAmountThreshold.toString(),
-                clothingMsg1 = config.clothingMessageLevel1,
-                clothingMsg2 = config.clothingMessageLevel2,
-                clothingMsg3 = config.clothingMessageLevel3,
-                clothingMsg4 = config.clothingMessageLevel4,
-                clothingMsg5 = config.clothingMessageLevel5,
-                clothingMsg6 = config.clothingMessageLevel6,
-                clothingMsg7 = config.clothingMessageLevel7,
                 notificationDays = config.notificationDays
             )
         }
@@ -1120,21 +914,8 @@ private data class SettingsState(
             morningCommuteEndHour = morningEnd.toIntOrNull() ?: fallbackConfig.morningCommuteEndHour,
             eveningCommuteStartHour = eveningStart.toIntOrNull() ?: fallbackConfig.eveningCommuteStartHour,
             eveningCommuteEndHour = eveningEnd.toIntOrNull() ?: fallbackConfig.eveningCommuteEndHour,
-            temperatureHot = tempHot.toDoubleOrNull() ?: fallbackConfig.temperatureHot,
-            temperatureWarm = tempWarm.toDoubleOrNull() ?: fallbackConfig.temperatureWarm,
-            temperatureMild = tempMild.toDoubleOrNull() ?: fallbackConfig.temperatureMild,
-            temperatureCool = tempCool.toDoubleOrNull() ?: fallbackConfig.temperatureCool,
-            temperatureCold = tempCold.toDoubleOrNull() ?: fallbackConfig.temperatureCold,
-            temperatureVeryCold = tempVeryCold.toDoubleOrNull() ?: fallbackConfig.temperatureVeryCold,
             precipitationProbabilityThreshold = precipProbThreshold.toDoubleOrNull() ?: fallbackConfig.precipitationProbabilityThreshold,
             precipitationAmountThreshold = precipAmountThreshold.toDoubleOrNull() ?: fallbackConfig.precipitationAmountThreshold,
-            clothingMessageLevel1 = clothingMsg1,
-            clothingMessageLevel2 = clothingMsg2,
-            clothingMessageLevel3 = clothingMsg3,
-            clothingMessageLevel4 = clothingMsg4,
-            clothingMessageLevel5 = clothingMsg5,
-            clothingMessageLevel6 = clothingMsg6,
-            clothingMessageLevel7 = clothingMsg7,
             notificationDays = notificationDays
         )
     }
