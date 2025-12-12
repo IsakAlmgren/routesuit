@@ -1,6 +1,6 @@
 # RouteSuit
 
-**RouteSuit** is an Android weather app designed to help you prepare for your daily commute. Get personalized weather forecasts and clothing recommendations for your morning and evening commutes, so you're always dressed appropriately for the weather.
+**RouteSuit** is an Android weather app designed to help you prepare for your daily commute. Get personalized weather forecasts for your morning and evening commutes, including temperature and rain alerts.
 
 # Disclaimer
 This app is mainly created by AI, with some manual tweaks by me. (As if the overuse of emojis didn't make that clear)
@@ -13,19 +13,6 @@ This app is mainly created by AI, with some manual tweaks by me. (As if the over
 - Temperature and precipitation information
 - Support for any location worldwide
 
-### 👔 Smart Clothing Recommendations
-- 7-level clothing recommendation system based on temperature
-- Customizable temperature thresholds for each clothing level
-- Personalized clothing messages you can edit
-- Automatic recommendations for:
-  - Very Light (>20°C): Shorts and t-shirt
-  - Light (15-20°C): T-shirt with light jacket
-  - Moderate (10-15°C): Long sleeves and light jacket
-  - Cool (5-10°C): Sweater and jacket
-  - Warm (0-5°C): Heavy jacket and layers
-  - Cold (-5-0°C): Winter coat and warm layers
-  - Very Cold (<-5°C): Heavy winter gear required
-
 ### 🌧️ Rain Alerts
 - Precipitation probability and amount forecasts
 - Smart rain gear recommendations
@@ -35,9 +22,7 @@ This app is mainly created by AI, with some manual tweaks by me. (As if the over
 ### ⚙️ Highly Customizable
 - **Location**: Set coordinates manually or use GPS to get your current location
 - **Commute Times**: Configure your morning and evening commute time windows
-- **Temperature Thresholds**: Adjust temperature breakpoints for clothing levels
 - **Precipitation Thresholds**: Set when to recommend rain clothes
-- **Clothing Messages**: Customize the recommendation text for each clothing level
 - **Language**: Support for English and Swedish (with system default option)
 
 ### 🔔 Daily Notifications
@@ -93,16 +78,16 @@ The APK will be generated at: `app/build/outputs/apk/debug/app-debug.apk`
    - Set your morning commute start and end hours (24-hour format)
    - Set your evening commute start and end hours
 
-3. **Customize Recommendations** (Optional):
-   - Adjust temperature thresholds for clothing levels
+3. **Customize Settings** (Optional):
    - Modify precipitation thresholds
-   - Edit clothing recommendation messages
+   - Configure commute times
+   - Configure notification days and times
 
 ### Daily Use
 
 - Open the app to see weather forecasts for your next commute
-- View temperature, clothing recommendations, and rain alerts
-- Tap "Refresh" to update the forecast
+- View temperature and rain alerts
+- Pull down to refresh the forecast (pull-to-refresh)
 - Check notifications for daily weather updates
 
 ## Configuration
@@ -116,16 +101,6 @@ The APK will be generated at: `app/build/outputs/apk/debug/app-debug.apk`
 - Configure in 24-hour format (0-23)
 - Default: Morning 7-9 AM, Evening 4-7 PM
 
-### Temperature Thresholds
-Customize the temperature breakpoints for each clothing level:
-- Very Light: > 20°C (default)
-- Light: > 15°C (default)
-- Moderate: > 10°C (default)
-- Cool: > 5°C (default)
-- Warm: > 0°C (default)
-- Cold: > -5°C (default)
-- Very Cold: < -5°C
-
 ### Precipitation Thresholds
 - **Probability Threshold**: Minimum percentage to recommend rain clothes (default: 20%)
 - **Amount Threshold**: Minimum expected precipitation in mm (default: 0.5 mm)
@@ -136,7 +111,8 @@ Customize the temperature breakpoints for each clothing level:
 - **UI Framework**: Jetpack Compose
 - **Architecture**: MVVM with dependency injection
 - **Dependency Injection**: Koin
-- **Networking**: Retrofit 3.0 with Gson
+- **Networking**: Retrofit 3.0 with OkHttp and Gson
+- **Logging**: Timber
 - **Coroutines**: Kotlin Coroutines for async operations
 - **Navigation**: Navigation Compose
 - **Background Work**: WorkManager for notifications
@@ -178,6 +154,7 @@ app/src/main/java/se/isakalmgren/routesuit/
 ├── WeatherNotificationWorker.kt # Background notification worker
 ├── LanguageRepository.kt        # Language/locale management
 ├── AppModule.kt                 # Dependency injection setup
+├── Constants.kt                 # Application constants
 └── ui/theme/                    # Material Design theme
 ```
 
@@ -209,7 +186,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## Author
 
-Developed by Isak Almgren
+Developed by AI, with some manual tweaks by me.
 
 ---
 
