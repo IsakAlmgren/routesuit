@@ -4,7 +4,7 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Location
-import android.util.Log
+import timber.log.Timber
 import androidx.annotation.RequiresPermission
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -16,8 +16,6 @@ import kotlinx.coroutines.tasks.await
 class LocationHelper(private val context: Context) {
     private val fusedLocationClient: FusedLocationProviderClient =
         LocationServices.getFusedLocationProviderClient(context)
-    
-    private val TAG = "LocationHelper"
     
     /**
      * Check if location permissions are granted
@@ -40,7 +38,7 @@ class LocationHelper(private val context: Context) {
     @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
     suspend fun getCurrentLocation(): Pair<Double, Double>? {
         if (!hasLocationPermission()) {
-            Log.w(TAG, "Location permission not granted")
+            Timber.w("Location permission not granted")
             return null
         }
         
@@ -52,10 +50,10 @@ class LocationHelper(private val context: Context) {
                 cancellationTokenSource.token
             ).await()
             
-            Log.d(TAG, "Location obtained: lat=${location.latitude}, lon=${location.longitude}")
+            Timber.d("Location obtained: lat=${location.latitude}, lon=${location.longitude}")
             Pair(location.longitude, location.latitude)
         } catch (e: Exception) {
-            Log.e(TAG, "Error getting location", e)
+            Timber.e(e, "Error getting location")
             null
         }
     }

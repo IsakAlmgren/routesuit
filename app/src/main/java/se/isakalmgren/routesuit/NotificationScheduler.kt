@@ -1,7 +1,7 @@
 package se.isakalmgren.routesuit
 
 import android.content.Context
-import android.util.Log
+import timber.log.Timber
 import androidx.work.Constraints
 import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
@@ -12,7 +12,6 @@ import java.util.concurrent.TimeUnit
 
 object NotificationScheduler {
     private const val WORK_NAME = "weather_notification_work"
-    private const val TAG = "NotificationScheduler"
     
     fun scheduleDailyNotification(context: Context, configRepository: ConfigRepository? = null) {
         val workManager = WorkManager.getInstance(context)
@@ -23,8 +22,8 @@ object NotificationScheduler {
         
         // Find next allowed day
         val calendar = Calendar.getInstance()
-        calendar.set(Calendar.HOUR_OF_DAY, 7)
-        calendar.set(Calendar.MINUTE, 30)
+        calendar.set(Calendar.HOUR_OF_DAY, Constants.NOTIFICATION_DEFAULT_HOUR)
+        calendar.set(Calendar.MINUTE, Constants.NOTIFICATION_DEFAULT_MINUTE)
         calendar.set(Calendar.SECOND, 0)
         calendar.set(Calendar.MILLISECOND, 0)
         
@@ -39,17 +38,17 @@ object NotificationScheduler {
                 daysToAdd++
             }
             if (daysToAdd >= 7) {
-                Log.w(TAG, "No allowed notification days configured, scheduling for tomorrow anyway")
+                Timber.w("No allowed notification days configured, scheduling for tomorrow anyway")
             }
         }
         
         val delay = calendar.timeInMillis - System.currentTimeMillis()
         val initialDelayMinutes = TimeUnit.MILLISECONDS.toMinutes(delay)
         
-        // Ensure minimum delay of 15 minutes (WorkManager requirement for reliability)
-        val finalDelayMinutes = maxOf(initialDelayMinutes, 15)
+        // Ensure minimum delay (WorkManager requirement for reliability)
+        val finalDelayMinutes = maxOf(initialDelayMinutes, Constants.NOTIFICATION_MIN_DELAY_MINUTES)
         
-        Log.d(TAG, "Scheduling notification in $finalDelayMinutes minutes for day ${calendar.get(Calendar.DAY_OF_WEEK)}")
+        Timber.d("Scheduling notification in $finalDelayMinutes minutes for day ${calendar.get(Calendar.DAY_OF_WEEK)}")
         
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.CONNECTED)
@@ -67,7 +66,7 @@ object NotificationScheduler {
             ExistingWorkPolicy.REPLACE,
             workRequest
         )
-        Log.d(TAG, "Notification work enqueued with ID: ${workRequest.id}")
+        Timber.d("Notification work enqueued with ID: ${workRequest.id}")
     }
     
     fun scheduleNextDay(context: Context, configRepository: ConfigRepository? = null) {
@@ -77,10 +76,10 @@ object NotificationScheduler {
         val allowedDays = configRepository?.getConfig()?.notificationDays 
             ?: AppConfig().notificationDays
         
-        // Calculate next 7:30 AM and find next allowed day
+        // Calculate next notification time and find next allowed day
         val calendar = Calendar.getInstance()
-        calendar.set(Calendar.HOUR_OF_DAY, 7)
-        calendar.set(Calendar.MINUTE, 30)
+        calendar.set(Calendar.HOUR_OF_DAY, Constants.NOTIFICATION_DEFAULT_HOUR)
+        calendar.set(Calendar.MINUTE, Constants.NOTIFICATION_DEFAULT_MINUTE)
         calendar.set(Calendar.SECOND, 0)
         calendar.set(Calendar.MILLISECOND, 0)
         
@@ -94,14 +93,14 @@ object NotificationScheduler {
             daysToAdd++
         }
         if (daysToAdd >= 7) {
-            Log.w(TAG, "No allowed notification days configured, scheduling for tomorrow anyway")
+            Timber.w("No allowed notification days configured, scheduling for tomorrow anyway")
         }
         
         val delay = calendar.timeInMillis - System.currentTimeMillis()
         val delayMinutes = TimeUnit.MILLISECONDS.toMinutes(delay)
         
-        // Ensure minimum delay of 15 minutes
-        val finalDelayMinutes = maxOf(delayMinutes, 15)
+        // Ensure minimum delay
+        val finalDelayMinutes = maxOf(delayMinutes, Constants.NOTIFICATION_MIN_DELAY_MINUTES)
         
         val workRequest = OneTimeWorkRequestBuilder<WeatherNotificationWorker>()
             .setInitialDelay(finalDelayMinutes, TimeUnit.MINUTES)
@@ -118,12 +117,12 @@ object NotificationScheduler {
             ExistingWorkPolicy.REPLACE,
             workRequest
         )
-        Log.d(TAG, "Rescheduled notification for day ${calendar.get(Calendar.DAY_OF_WEEK)} at 7:30 AM (in $finalDelayMinutes minutes) with ID: ${workRequest.id}")
+        Timber.d("Rescheduled notification for day ${calendar.get(Calendar.DAY_OF_WEEK)} at 7:30 AM (in $finalDelayMinutes minutes) with ID: ${workRequest.id}")
     }
     
     fun cancelNotification(context: Context) {
         WorkManager.getInstance(context).cancelUniqueWork(WORK_NAME)
-        Log.d(TAG, "Cancelled all notification work")
+        Timber.d("Cancelled all notification work")
     }
 }
 

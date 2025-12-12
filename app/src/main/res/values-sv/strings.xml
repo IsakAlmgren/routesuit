@@ -70,6 +70,16 @@
     <string name="no_commute_data">Ingen pendlingsdata tillgänglig för idag</string>
     <string name="error">Fel</string>
     <string name="failed_to_fetch_weather">Kunde inte hämta väder: %1$s</string>
+    <string name="error_network">Nätverksfel</string>
+    <string name="error_network_message">Kunde inte ansluta till vädertjänsten. Kontrollera din internetanslutning och försök igen.</string>
+    <string name="error_timeout">Anslutningstimeout</string>
+    <string name="error_timeout_message">Begäran tog för lång tid. Kontrollera din internetanslutning och försök igen.</string>
+    <string name="error_server">Serverfel</string>
+    <string name="error_server_message">Vädertjänsten är tillfälligt otillgänglig. Försök igen senare.</string>
+    <string name="error_unknown">Okänt fel</string>
+    <string name="error_unknown_message">Ett oväntat fel uppstod: %1$s</string>
+    <string name="last_updated">Senast uppdaterad: %1$s</string>
+    <string name="data_stale_warning">⚠️ Data kan vara föråldrad</string>
     
     <!-- Weather Recommendation Cards -->
     <string name="bring_rain_clothes">🌧️ Regnkläder behövs!</string>
@@ -78,7 +88,7 @@
     <string name="precipitation_probability">Nedbördsannolikhet: %1$d%%</string>
     <string name="expected_precipitation">Förväntat: %1$.1f mm</string>
     <string name="no_rain_expected">☀️ Inget regn förväntas</string>
-    <string name="skip_rain_gear">Du kan hoppa över regnkläderna idag</string>
+    <string name="skip_rain_gear">Du kan skippa regnkläderna idag</string>
     <string name="bring_rain_clothes_message">🌧️ Ta med regnkläder! </string>
     <string name="bring_rain_clothes_for_later_message">🌧️ Ta med regnkläder för senare! </string>
     <string name="rain_expected_home">Regn förväntas på vägen hem (%1$d%% chans, %2$.1f mm)</string>

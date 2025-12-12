@@ -8,6 +8,7 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -29,11 +30,16 @@ import org.koin.compose.koinInject
 import se.isakalmgren.routesuit.ui.theme.RouteSuitTheme
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalContext
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
+import java.io.IOException
+import retrofit2.HttpException
+import timber.log.Timber
 
 sealed class WeatherUiState {
     data object Loading : WeatherUiState()
-    data class Success(val recommendations: CommuteRecommendations) : WeatherUiState()
-    data class Error(val message: String) : WeatherUiState()
+    data class Success(val recommendations: CommuteRecommendations, val lastUpdated: Long = System.currentTimeMillis()) : WeatherUiState()
+    data class Error(val title: String, val message: String) : WeatherUiState()
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -47,121 +53,176 @@ fun WeatherScreen(
     val configState = configRepository.config.collectAsState()
     val appConfig = configState.value
     val context = LocalContext.current
-    
+
     var uiState by remember { mutableStateOf<WeatherUiState>(WeatherUiState.Loading) }
     val coroutineScope = rememberCoroutineScope()
-    
+
     fun fetchWeather() {
         coroutineScope.launch {
             uiState = WeatherUiState.Loading
             try {
                 val lonStr = String.format(java.util.Locale.US, "%.4f", appConfig.longitude)
                 val latStr = String.format(java.util.Locale.US, "%.3f", appConfig.latitude)
-                val url = "https://opendata-download-metfcst.smhi.se/api/category/snow1g/version/1/geotype/point/lon/$lonStr/lat/$latStr/data.json"
-                android.util.Log.d("WeatherScreen", "Attempting to fetch weather from URL: $url")
-                android.util.Log.d("WeatherScreen", "Longitude: ${appConfig.longitude} -> $lonStr, Latitude: ${appConfig.latitude} -> $latStr")
-                
+                Timber.d("Fetching weather for coordinates: lon=$lonStr, lat=$latStr")
+
                 val response = apiService.getWeatherForecast(
                     longitude = lonStr,
                     latitude = latStr
                 )
-                val recommendations = analyzeWeatherForCommutes(response.timeSeries, appConfig, context)
-                uiState = WeatherUiState.Success(recommendations)
+                val recommendations =
+                    analyzeWeatherForCommutes(response.timeSeries, appConfig, context)
+                uiState = WeatherUiState.Success(recommendations, System.currentTimeMillis())
+                Timber.d("Weather data fetched successfully")
+            } catch (e: SocketTimeoutException) {
+                Timber.e(e, "Connection timeout while fetching weather")
+                val title = context.getString(R.string.error_timeout)
+                val message = context.getString(R.string.error_timeout_message)
+                uiState = WeatherUiState.Error(title, message)
+            } catch (e: UnknownHostException) {
+                Timber.e(e, "Network error - unable to resolve host")
+                val title = context.getString(R.string.error_network)
+                val message = context.getString(R.string.error_network_message)
+                uiState = WeatherUiState.Error(title, message)
+            } catch (e: IOException) {
+                Timber.e(e, "Network I/O error")
+                val title = context.getString(R.string.error_network)
+                val message = context.getString(R.string.error_network_message)
+                uiState = WeatherUiState.Error(title, message)
+            } catch (e: HttpException) {
+                Timber.e(e, "HTTP error: ${e.code()}")
+                val title = context.getString(R.string.error_server)
+                val message = context.getString(R.string.error_server_message)
+                uiState = WeatherUiState.Error(title, message)
             } catch (e: Exception) {
-                val errorMsg = context.getString(R.string.failed_to_fetch_weather, e.message ?: "")
-                uiState = WeatherUiState.Error(errorMsg)
+                Timber.e(e, "Unexpected error while fetching weather")
+                val title = context.getString(R.string.error_unknown)
+                val message = context.getString(
+                    R.string.error_unknown_message,
+                    e.message ?: context.getString(R.string.error)
+                )
+                uiState = WeatherUiState.Error(title, message)
             }
         }
     }
-    
+
     LaunchedEffect(appConfig) {
         fetchWeather()
     }
-    
+
     Scaffold(
         modifier = modifier,
         topBar = {
             WeatherTopAppBar(onSettingsClick = onSettingsClick)
         }
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally
+        val isRefreshing = when (uiState) {
+            is WeatherUiState.Loading -> true
+            else -> false
+        }
+
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = { fetchWeather() },
+            modifier = Modifier.fillMaxSize()
         ) {
-            when (val state = uiState) {
-                is WeatherUiState.Loading -> {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(32.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(16.dp)
-                        ) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(48.dp),
-                                strokeWidth = 4.dp
-                            )
-                            Text(
-                                text = stringResource(R.string.loading_weather_forecast),
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                }
-                
-                is WeatherUiState.Success -> {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
-                        verticalArrangement = Arrangement.spacedBy(20.dp)
-                    ) {
-                        if (state.recommendations.morningCommute != null) {
-                            WeatherRecommendationCard(
-                                recommendation = state.recommendations.morningCommute,
-                                title = stringResource(R.string.to_work)
-                            )
-                        }
-                        
-                        if (state.recommendations.eveningCommute != null) {
-                            WeatherRecommendationCard(
-                                recommendation = state.recommendations.eveningCommute,
-                                title = stringResource(R.string.from_work)
-                            )
-                        }
-                        
-                        if (state.recommendations.morningCommute == null && state.recommendations.eveningCommute == null) {
-                            NoCommuteDataCard()
-                        }
-                        
-                        OutlinedButton(
-                            onClick = { fetchWeather() },
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                when (val state = uiState) {
+                    is WeatherUiState.Loading -> {
+                        Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(top = 8.dp, bottom = 16.dp)
+                                .padding(32.dp),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Text(stringResource(R.string.refresh))
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(48.dp),
+                                    strokeWidth = 4.dp
+                                )
+                                Text(
+                                    text = stringResource(R.string.loading_weather_forecast),
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                     }
-                }
-                
-                is WeatherUiState.Error -> {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp)
-                    ) {
-                        ErrorCard(
-                            message = state.message,
-                            onRetry = { fetchWeather() }
-                        )
+
+                    is WeatherUiState.Success -> {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                            verticalArrangement = Arrangement.spacedBy(20.dp)
+                        ) {
+                            // Data freshness indicator
+                            val timestamp = formatTimestamp(state.lastUpdated, context)
+                            val isStale =
+                                (System.currentTimeMillis() - state.lastUpdated) > Constants.STALE_DATA_THRESHOLD_HOURS * 60 * 60 * 1000
+
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 8.dp),
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = context.getString(R.string.last_updated, timestamp),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                if (isStale) {
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = context.getString(R.string.data_stale_warning),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.error
+                                    )
+                                }
+                            }
+
+                            if (state.recommendations.morningCommute != null) {
+                                WeatherRecommendationCard(
+                                    recommendation = state.recommendations.morningCommute,
+                                    title = stringResource(R.string.to_work)
+                                )
+                            }
+
+                            if (state.recommendations.eveningCommute != null) {
+                                WeatherRecommendationCard(
+                                    recommendation = state.recommendations.eveningCommute,
+                                    title = stringResource(R.string.from_work)
+                                )
+                            }
+
+                            if (state.recommendations.morningCommute == null && state.recommendations.eveningCommute == null) {
+                                NoCommuteDataCard()
+                            }
+                        }
+                    }
+
+                    is WeatherUiState.Error -> {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp)
+                        ) {
+                            ErrorCard(
+                                title = state.title,
+                                message = state.message,
+                                onRetry = { fetchWeather() }
+                            )
+                        }
                     }
                 }
             }
@@ -351,8 +412,17 @@ fun WeatherTopAppBar(onSettingsClick: () -> Unit) {
     )
 }
 
+private fun formatTimestamp(timestamp: Long, context: android.content.Context): String {
+    val dateTime = java.time.Instant.ofEpochMilli(timestamp)
+        .atZone(java.time.ZoneId.systemDefault())
+        .toLocalDateTime()
+    
+    val formatter = java.time.format.DateTimeFormatter.ofPattern("HH:mm", java.util.Locale.getDefault())
+    return dateTime.format(formatter)
+}
+
 @Composable
-private fun ErrorCard(message: String, onRetry: () -> Unit) {
+private fun ErrorCard(title: String, message: String, onRetry: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -364,14 +434,16 @@ private fun ErrorCard(message: String, onRetry: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = stringResource(R.string.error),
+                text = title,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onErrorContainer
+                color = MaterialTheme.colorScheme.onErrorContainer,
+                style = MaterialTheme.typography.titleMedium
             )
             Text(
                 text = message,
                 color = MaterialTheme.colorScheme.onErrorContainer,
-                modifier = Modifier.padding(top = 8.dp)
+                modifier = Modifier.padding(top = 8.dp),
+                style = MaterialTheme.typography.bodyMedium
             )
             Button(
                 onClick = onRetry,
@@ -617,6 +689,7 @@ fun WeatherScreenPreview_Error() {
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 ErrorCard(
+                    title = "Error",
                     message = "Failed to fetch weather: Network error",
                     onRetry = { }
                 )

@@ -70,6 +70,16 @@
     <string name="no_commute_data">No commute data available for today</string>
     <string name="error">Error</string>
     <string name="failed_to_fetch_weather">Failed to fetch weather: %1$s</string>
+    <string name="error_network">Network Error</string>
+    <string name="error_network_message">Unable to connect to the weather service. Please check your internet connection and try again.</string>
+    <string name="error_timeout">Connection Timeout</string>
+    <string name="error_timeout_message">The request took too long. Please check your internet connection and try again.</string>
+    <string name="error_server">Server Error</string>
+    <string name="error_server_message">The weather service is temporarily unavailable. Please try again later.</string>
+    <string name="error_unknown">Unknown Error</string>
+    <string name="error_unknown_message">An unexpected error occurred: %1$s</string>
+    <string name="last_updated">Last updated: %1$s</string>
+    <string name="data_stale_warning">⚠️ Data may be outdated</string>
     
     <!-- Weather Recommendation Cards -->
     <string name="bring_rain_clothes">🌧️ Rain Clothes Needed!</string>

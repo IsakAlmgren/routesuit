@@ -10,6 +10,7 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import timber.log.Timber
 
 class WeatherNotificationWorker(
     context: Context,
@@ -25,8 +26,7 @@ class WeatherNotificationWorker(
             val lonStr = String.format(java.util.Locale.US, "%.4f", appConfig.longitude)
             val latStr = String.format(java.util.Locale.US, "%.3f", appConfig.latitude)
             val url = "https://opendata-download-metfcst.smhi.se/api/category/snow1g/version/1/geotype/point/lon/$lonStr/lat/$latStr/data.json"
-            android.util.Log.d("WeatherNotificationWorker", "Attempting to fetch weather from URL: $url")
-            android.util.Log.d("WeatherNotificationWorker", "Longitude: ${appConfig.longitude} -> $lonStr, Latitude: ${appConfig.latitude} -> $latStr")
+            Timber.d("Fetching weather for coordinates: lon=$lonStr, lat=$latStr")
             
             val response = apiService.getWeatherForecast(
                 longitude = lonStr,
@@ -41,7 +41,7 @@ class WeatherNotificationWorker(
             if (allowedDays.contains(today)) {
                 sendNotification(recommendations)
             } else {
-                android.util.Log.d("WeatherNotificationWorker", "Skipping notification - today (day $today) is not in allowed days: $allowedDays")
+                Timber.d("Skipping notification - today (day $today) is not in allowed days: $allowedDays")
             }
             
             // Reschedule for next day after successful completion
@@ -49,7 +49,7 @@ class WeatherNotificationWorker(
             
             Result.success()
         } catch (e: Exception) {
-            android.util.Log.e("WeatherNotificationWorker", "Error in doWork", e)
+            Timber.e(e, "Error in doWork")
             // On failure, still reschedule but with retry backoff
             NotificationScheduler.scheduleNextDay(applicationContext, configRepository)
             Result.retry()

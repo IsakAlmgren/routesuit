@@ -54,7 +54,11 @@ dependencies {
     // Network
     implementation(libs.retrofit)
     implementation(libs.retrofit.gson)
+    implementation(libs.okhttp)
     implementation(libs.gson)
+    
+    // Logging
+    implementation(libs.timber)
     
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
