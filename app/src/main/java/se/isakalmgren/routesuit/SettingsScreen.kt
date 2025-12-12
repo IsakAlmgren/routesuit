@@ -28,6 +28,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import android.app.Activity
+import java.util.Calendar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -540,6 +541,60 @@ fun SettingsScreen(
             
             Spacer(modifier = Modifier.height(20.dp))
             
+            // Notification Days Section
+            SettingsSection(
+                title = stringResource(R.string.notification_days),
+                subtitle = stringResource(R.string.notification_days_subtitle)
+            ) {
+                val daysOfWeek = listOf(
+                    Calendar.MONDAY to stringResource(R.string.monday),
+                    Calendar.TUESDAY to stringResource(R.string.tuesday),
+                    Calendar.WEDNESDAY to stringResource(R.string.wednesday),
+                    Calendar.THURSDAY to stringResource(R.string.thursday),
+                    Calendar.FRIDAY to stringResource(R.string.friday),
+                    Calendar.SATURDAY to stringResource(R.string.saturday),
+                    Calendar.SUNDAY to stringResource(R.string.sunday)
+                )
+                
+                daysOfWeek.forEach { (dayOfWeek, dayName) ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                val currentDays = settingsState.notificationDays.toMutableSet()
+                                if (currentDays.contains(dayOfWeek)) {
+                                    currentDays.remove(dayOfWeek)
+                                } else {
+                                    currentDays.add(dayOfWeek)
+                                }
+                                settingsState = settingsState.copy(notificationDays = currentDays)
+                            }
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(
+                            checked = settingsState.notificationDays.contains(dayOfWeek),
+                            onCheckedChange = { checked ->
+                                val currentDays = settingsState.notificationDays.toMutableSet()
+                                if (checked) {
+                                    currentDays.add(dayOfWeek)
+                                } else {
+                                    currentDays.remove(dayOfWeek)
+                                }
+                                settingsState = settingsState.copy(notificationDays = currentDays)
+                            }
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = dayName,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(20.dp))
+            
             // Clothing Messages Section
             SettingsSection(
                 title = stringResource(R.string.clothing_messages),
@@ -906,7 +961,8 @@ private data class SettingsState(
     val clothingMsg4: String,
     val clothingMsg5: String,
     val clothingMsg6: String,
-    val clothingMsg7: String
+    val clothingMsg7: String,
+    val notificationDays: Set<Int>
 ) {
     companion object {
         fun fromConfig(config: AppConfig): SettingsState {
@@ -931,7 +987,8 @@ private data class SettingsState(
                 clothingMsg4 = config.clothingMessageLevel4,
                 clothingMsg5 = config.clothingMessageLevel5,
                 clothingMsg6 = config.clothingMessageLevel6,
-                clothingMsg7 = config.clothingMessageLevel7
+                clothingMsg7 = config.clothingMessageLevel7,
+                notificationDays = config.notificationDays
             )
         }
     }
@@ -958,7 +1015,8 @@ private data class SettingsState(
             clothingMessageLevel4 = clothingMsg4,
             clothingMessageLevel5 = clothingMsg5,
             clothingMessageLevel6 = clothingMsg6,
-            clothingMessageLevel7 = clothingMsg7
+            clothingMessageLevel7 = clothingMsg7,
+            notificationDays = notificationDays
         )
     }
 }

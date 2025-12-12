@@ -20,13 +20,19 @@ import androidx.navigation.compose.rememberNavController
 import se.isakalmgren.routesuit.ui.theme.RouteSuitTheme
 import android.content.Context
 import android.content.res.Configuration
+import org.koin.core.context.GlobalContext
 
 class MainActivity : ComponentActivity() {
     private val requestNotificationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
-            NotificationScheduler.scheduleDailyNotification(this)
+            val configRepository = try {
+                GlobalContext.get().get<ConfigRepository>()
+            } catch (e: Exception) {
+                null
+            }
+            NotificationScheduler.scheduleDailyNotification(this, configRepository)
         }
     }
     
@@ -53,10 +59,15 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         
         // Request notification permission for Android 13+
+        val configRepository = try {
+            GlobalContext.get().get<ConfigRepository>()
+        } catch (e: Exception) {
+            null
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             requestNotificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
         } else {
-            NotificationScheduler.scheduleDailyNotification(this)
+            NotificationScheduler.scheduleDailyNotification(this, configRepository)
         }
         
         setContent {

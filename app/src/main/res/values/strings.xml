@@ -132,6 +132,17 @@
     <string name="language_english">English</string>
     <string name="language_swedish">Swedish</string>
     
+    <!-- Notification Days Settings -->
+    <string name="notification_days">Notification Days</string>
+    <string name="notification_days_subtitle">Select which days you want to receive weather notifications</string>
+    <string name="monday">Monday</string>
+    <string name="tuesday">Tuesday</string>
+    <string name="wednesday">Wednesday</string>
+    <string name="thursday">Thursday</string>
+    <string name="friday">Friday</string>
+    <string name="saturday">Saturday</string>
+    <string name="sunday">Sunday</string>
+    
     <!-- Content Descriptions -->
     <string name="content_description_app_icon">App Icon</string>
     <string name="content_description_settings">Settings</string>

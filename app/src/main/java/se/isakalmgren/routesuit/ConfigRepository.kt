@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import java.time.ZoneId
+import java.util.Calendar
 
 class ConfigRepository(
     private val context: Context,
@@ -132,8 +133,19 @@ class ConfigRepository(
             clothingMessageLevel7 = prefs.getString(
                 getClothingMessageKey(7, currentLanguageCode),
                 defaultMessages[7] ?: defaultConfig.clothingMessageLevel7
-            ) ?: defaultMessages[7] ?: defaultConfig.clothingMessageLevel7
+            ) ?: defaultMessages[7] ?: defaultConfig.clothingMessageLevel7,
+            notificationDays = loadNotificationDays()
         )
+    }
+    
+    private fun loadNotificationDays(): Set<Int> {
+        val defaultDays = AppConfig().notificationDays
+        val daysString = prefs.getString("notification_days", null)
+        return if (daysString != null && daysString.isNotEmpty()) {
+            daysString.split(",").mapNotNull { it.toIntOrNull() }.toSet()
+        } else {
+            defaultDays
+        }
     }
     
     fun saveConfig(config: AppConfig) {
@@ -161,6 +173,8 @@ class ConfigRepository(
             putString(getClothingMessageKey(5, currentLanguageCode), config.clothingMessageLevel5)
             putString(getClothingMessageKey(6, currentLanguageCode), config.clothingMessageLevel6)
             putString(getClothingMessageKey(7, currentLanguageCode), config.clothingMessageLevel7)
+            // Save notification days as comma-separated string
+            putString("notification_days", config.notificationDays.joinToString(","))
             apply()
         }
         _config.value = config

@@ -1,6 +1,7 @@
 package se.isakalmgren.routesuit
 
 import java.time.ZoneId
+import java.util.Calendar
 
 /**
  * Application configuration containing all configurable values
@@ -37,7 +38,18 @@ data class AppConfig(
     val clothingMessageLevel4: String = "Sweater and jacket",
     val clothingMessageLevel5: String = "Heavy jacket and layers",
     val clothingMessageLevel6: String = "Winter coat and warm layers essential",
-    val clothingMessageLevel7: String = "Heavy winter gear required"
+    val clothingMessageLevel7: String = "Heavy winter gear required",
+    
+    // Notification settings
+    // Set of days of week when notifications should be sent (Calendar.DAY_OF_WEEK values)
+    // Default: Monday through Friday (weekdays)
+    val notificationDays: Set<Int> = setOf(
+        Calendar.MONDAY,
+        Calendar.TUESDAY,
+        Calendar.WEDNESDAY,
+        Calendar.THURSDAY,
+        Calendar.FRIDAY
+    )
 ) {
     // Always use the system default timezone
     val timezone: ZoneId

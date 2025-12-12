@@ -2,7 +2,9 @@ package se.isakalmgren.routesuit
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import androidx.core.app.NotificationCompat
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
@@ -32,16 +34,24 @@ class WeatherNotificationWorker(
             )
             val recommendations = analyzeWeatherForCommutes(response.timeSeries, appConfig, applicationContext)
             
-            sendNotification(recommendations)
+            // Check if today is an allowed notification day
+            val today = java.util.Calendar.getInstance().get(java.util.Calendar.DAY_OF_WEEK)
+            val allowedDays = appConfig.notificationDays
+            
+            if (allowedDays.contains(today)) {
+                sendNotification(recommendations)
+            } else {
+                android.util.Log.d("WeatherNotificationWorker", "Skipping notification - today (day $today) is not in allowed days: $allowedDays")
+            }
             
             // Reschedule for next day after successful completion
-            NotificationScheduler.scheduleNextDay(applicationContext)
+            NotificationScheduler.scheduleNextDay(applicationContext, configRepository)
             
             Result.success()
         } catch (e: Exception) {
             android.util.Log.e("WeatherNotificationWorker", "Error in doWork", e)
             // On failure, still reschedule but with retry backoff
-            NotificationScheduler.scheduleNextDay(applicationContext)
+            NotificationScheduler.scheduleNextDay(applicationContext, configRepository)
             Result.retry()
         }
     }
@@ -91,6 +101,17 @@ class WeatherNotificationWorker(
             applicationContext.getString(R.string.weather_update)
         }
         
+        // Create intent to open MainActivity when notification is tapped
+        val intent = Intent(applicationContext, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            applicationContext,
+            0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        
         val notification = NotificationCompat.Builder(applicationContext, channelId)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setContentTitle(title)
@@ -98,6 +119,7 @@ class WeatherNotificationWorker(
             .setStyle(NotificationCompat.BigTextStyle().bigText(message))
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
             .build()
         
         notificationManager.notify(1, notification)
