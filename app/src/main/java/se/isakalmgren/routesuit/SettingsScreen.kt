@@ -32,13 +32,19 @@ import android.app.Activity
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
+import android.location.Geocoder
 import android.net.Uri
+import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Warning
 import java.util.Calendar
 import java.util.Locale
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
+import kotlin.coroutines.resume
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,7 +68,6 @@ fun SettingsScreen(
     val failedToTestNotificationFmt = stringResource(R.string.failed_to_test_notification)
     val requiredStr = stringResource(R.string.required)
     val invalidNumberStr = stringResource(R.string.invalid_number)
-    val mustBeBetweenFmt = stringResource(R.string.must_be_between)
     val mustBe0To100Str = stringResource(R.string.must_be_0_to_100)
     val mustBePositiveStr = stringResource(R.string.must_be_positive)
 
@@ -70,7 +75,7 @@ fun SettingsScreen(
     var settingsState by remember(currentConfig) {
         mutableStateOf(SettingsState.fromConfig(currentConfig))
     }
-    
+
     val coroutineScope = rememberCoroutineScope()
     var showSaveSuccess by remember { mutableStateOf(false) }
     var showError by remember { mutableStateOf<String?>(null) }
@@ -78,14 +83,49 @@ fun SettingsScreen(
     var showExitDialog by remember { mutableStateOf(false) }
     var isFetchingLocation by remember { mutableStateOf(false) }
     var isTestingNotification by remember { mutableStateOf(false) }
-    
+
+    var locationName by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(settingsState.latitude, settingsState.longitude) {
+        locationName = null
+        if (!Geocoder.isPresent()) return@LaunchedEffect
+        locationName = withContext(Dispatchers.IO) {
+            try {
+                val geocoder = Geocoder(context, Locale.getDefault())
+                val addresses = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    suspendCancellableCoroutine { cont ->
+                        geocoder.getFromLocation(
+                            settingsState.latitude,
+                            settingsState.longitude,
+                            1
+                        ) {
+                            cont.resume(it)
+                        }
+                    }
+                } else {
+                    @Suppress("DEPRECATION")
+                    geocoder.getFromLocation(settingsState.latitude, settingsState.longitude, 1)
+                }
+                val addr = addresses?.firstOrNull() ?: return@withContext null
+                val place = addr.locality
+                    ?: addr.subLocality
+                    ?: addr.subAdminArea
+                    ?: addr.adminArea
+                listOfNotNull(place, addr.countryName)
+                    .joinToString(", ")
+                    .ifEmpty { null }
+            } catch (_: Exception) {
+                null
+            }
+        }
+    }
+
     // Permission launcher for location
     val locationPermissionLauncherInternal = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         val fineLocationGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] ?: false
         val coarseLocationGranted = permissions[Manifest.permission.ACCESS_COARSE_LOCATION] ?: false
-        
+
         if (fineLocationGranted || coarseLocationGranted) {
             coroutineScope.launch {
                 isFetchingLocation = true
@@ -93,14 +133,15 @@ fun SettingsScreen(
                     val location = locationHelper.getCurrentLocation()
                     if (location != null) {
                         settingsState = settingsState.copy(
-                            longitude = String.format(java.util.Locale.US, "%.4f", location.first),
-                            latitude = String.format(java.util.Locale.US, "%.4f", location.second)
+                            longitude = location.first,
+                            latitude = location.second
                         )
                     } else {
                         showError = couldNotGetLocationMsg
                     }
                 } catch (e: Exception) {
-                    showError = String.format(Locale.getDefault(), errorGettingLocationFmt, e.message ?: "")
+                    showError =
+                        String.format(Locale.getDefault(), errorGettingLocationFmt, e.message ?: "")
                 } finally {
                     isFetchingLocation = false
                 }
@@ -109,7 +150,7 @@ fun SettingsScreen(
             showError = locationPermissionDeniedMsg
         }
     }
-    
+
     fun getCurrentLocation() {
         if (!locationHelper.hasLocationPermission()) {
             locationPermissionLauncherInternal.launch(
@@ -125,25 +166,26 @@ fun SettingsScreen(
                     val location = locationHelper.getCurrentLocation()
                     if (location != null) {
                         settingsState = settingsState.copy(
-                            longitude = String.format(java.util.Locale.US, "%.4f", location.first),
-                            latitude = String.format(java.util.Locale.US, "%.4f", location.second)
+                            longitude = location.first,
+                            latitude = location.second
                         )
                     } else {
                         showError = couldNotGetLocationMsg
                     }
                 } catch (e: Exception) {
-                    showError = String.format(Locale.getDefault(), errorGettingLocationFmt, e.message ?: "")
+                    showError =
+                        String.format(Locale.getDefault(), errorGettingLocationFmt, e.message ?: "")
                 } finally {
                     isFetchingLocation = false
                 }
             }
         }
     }
-    
+
     // Track initial language to detect changes
     val initialLanguage = remember { languageRepository.getSelectedLanguage() }
     var currentLanguage by remember { mutableStateOf(initialLanguage) }
-    
+
     // Track if there are unsaved changes (config or language)
     val hasChanges = remember(settingsState, currentConfig, currentLanguage, initialLanguage) {
         val currentState = SettingsState.fromConfig(currentConfig)
@@ -151,23 +193,23 @@ fun SettingsScreen(
         val languageChanged = currentLanguage != initialLanguage
         configChanged || languageChanged
     }
-    
+
     // Update state when config changes externally
     LaunchedEffect(currentConfig) {
         settingsState = SettingsState.fromConfig(currentConfig)
     }
-    
+
     fun saveConfig() {
         try {
             val newConfig = settingsState.toConfig(currentConfig)
             configRepository.saveConfig(newConfig)
-            
+
             // Save language preference if it changed
             val languageChanged = currentLanguage != initialLanguage
             if (languageChanged) {
                 languageRepository.setLanguage(currentLanguage)
             }
-            
+
             // If language changed, recreate activity to apply locale
             if (languageChanged) {
                 val activity = context as? Activity
@@ -192,13 +234,13 @@ fun SettingsScreen(
             navController.popBackStack()
         }
     }
-    
+
     // Handle system back button - Navigation Compose handles this automatically,
     // but we intercept it to check for unsaved changes
     BackHandler(enabled = true) {
         handleBackNavigation()
     }
-    
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -263,7 +305,7 @@ fun SettingsScreen(
                 .verticalScroll(rememberScrollState())
         ) {
             Spacer(modifier = Modifier.height(4.dp))
-            
+
             // Success/Error messages
             if (showSaveSuccess) {
                 SuccessCard(
@@ -272,7 +314,7 @@ fun SettingsScreen(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
             }
-            
+
             if (showError != null) {
                 ErrorCard(
                     message = showError!!,
@@ -281,14 +323,14 @@ fun SettingsScreen(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
             }
-            
+
             // Language Section
             SettingsSection(
                 title = stringResource(R.string.language),
                 subtitle = stringResource(R.string.language_subtitle)
             ) {
                 var expanded by remember { mutableStateOf(false) }
-                
+
                 ExposedDropdownMenuBox(
                     expanded = expanded,
                     onExpandedChange = { expanded = !expanded },
@@ -333,12 +375,13 @@ fun SettingsScreen(
                     }
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(20.dp))
 
             // Battery Optimization Section
             val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
-            val isIgnoringBatteryOptimizations = powerManager.isIgnoringBatteryOptimizations(context.packageName)
+            val isIgnoringBatteryOptimizations =
+                powerManager.isIgnoringBatteryOptimizations(context.packageName)
             SettingsSection(
                 title = stringResource(R.string.battery_optimization),
                 subtitle = stringResource(R.string.battery_optimization_subtitle)
@@ -380,9 +423,10 @@ fun SettingsScreen(
                     Spacer(modifier = Modifier.height(4.dp))
                     Button(
                         onClick = {
-                            val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-                                data = Uri.parse("package:${context.packageName}")
-                            }
+                            val intent =
+                                Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                                    data = Uri.parse("package:${context.packageName}")
+                                }
                             context.startActivity(intent)
                         },
                         modifier = Modifier.fillMaxWidth()
@@ -393,70 +437,36 @@ fun SettingsScreen(
             }
 
             Spacer(modifier = Modifier.height(20.dp))
-            
+
             // Location Section
             SettingsSection(
                 title = stringResource(R.string.location),
                 subtitle = stringResource(R.string.location_subtitle)
             ) {
-                val longitudeError = remember(settingsState.longitude) {
-                    val lon = settingsState.longitude.toDoubleOrNull()
-                    when {
-                        settingsState.longitude.isBlank() -> requiredStr
-                        lon == null -> invalidNumberStr
-                        lon < -180 || lon > 180 -> String.format(Locale.getDefault(), mustBeBetweenFmt, "-180", "180")
-                        else -> null
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    if (locationName != null) {
+                        Text(
+                            text = locationName!!,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Medium
+                        )
                     }
+                    Text(
+                        text = String.format(
+                            Locale.getDefault(),
+                            "%.4f°, %.4f°",
+                            settingsState.latitude,
+                            settingsState.longitude
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
 
-                val latitudeError = remember(settingsState.latitude) {
-                    val lat = settingsState.latitude.toDoubleOrNull()
-                    when {
-                        settingsState.latitude.isBlank() -> requiredStr
-                        lat == null -> invalidNumberStr
-                        lat < -90 || lat > 90 -> String.format(Locale.getDefault(), mustBeBetweenFmt, "-90", "90")
-                        else -> null
-                    }
-                }
-                
-                OutlinedTextField(
-                    value = settingsState.longitude,
-                    onValueChange = { settingsState = settingsState.copy(longitude = it) },
-                    label = { Text(stringResource(R.string.longitude)) },
-                    modifier = Modifier.fillMaxWidth(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    singleLine = true,
-                    isError = longitudeError != null,
-                    supportingText = {
-                        if (longitudeError != null) {
-                            Text(longitudeError, color = MaterialTheme.colorScheme.error)
-                        } else {
-                            Text(stringResource(R.string.longitude_hint))
-                        }
-                    }
-                )
-                
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                OutlinedTextField(
-                    value = settingsState.latitude,
-                    onValueChange = { settingsState = settingsState.copy(latitude = it) },
-                    label = { Text(stringResource(R.string.latitude)) },
-                    modifier = Modifier.fillMaxWidth(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    singleLine = true,
-                    isError = latitudeError != null,
-                    supportingText = {
-                        if (latitudeError != null) {
-                            Text(latitudeError, color = MaterialTheme.colorScheme.error)
-                        } else {
-                            Text(stringResource(R.string.latitude_hint))
-                        }
-                    }
-                )
-                
-                Spacer(modifier = Modifier.height(12.dp))
-                
                 Button(
                     onClick = { getCurrentLocation() },
                     modifier = Modifier.fillMaxWidth(),
@@ -480,9 +490,9 @@ fun SettingsScreen(
                     }
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(20.dp))
-            
+
             // Commute Times Section
             SettingsSection(
                 title = stringResource(R.string.commute_times),
@@ -495,9 +505,9 @@ fun SettingsScreen(
                     onStartChange = { settingsState = settingsState.copy(morningStart = it) },
                     onEndChange = { settingsState = settingsState.copy(morningEnd = it) }
                 )
-                
+
                 Spacer(modifier = Modifier.height(12.dp))
-                
+
                 CommuteTimeInput(
                     label = stringResource(R.string.evening_commute),
                     startHour = settingsState.eveningStart,
@@ -506,9 +516,9 @@ fun SettingsScreen(
                     onEndChange = { settingsState = settingsState.copy(eveningEnd = it) }
                 )
             }
-            
+
             Spacer(modifier = Modifier.height(20.dp))
-            
+
             // Precipitation Thresholds Section
             SettingsSection(
                 title = stringResource(R.string.precipitation_thresholds),
@@ -533,10 +543,12 @@ fun SettingsScreen(
                         else -> null
                     }
                 }
-                
+
                 OutlinedTextField(
                     value = settingsState.precipProbThreshold,
-                    onValueChange = { settingsState = settingsState.copy(precipProbThreshold = it) },
+                    onValueChange = {
+                        settingsState = settingsState.copy(precipProbThreshold = it)
+                    },
                     label = { Text(stringResource(R.string.probability_threshold_percent)) },
                     modifier = Modifier.fillMaxWidth(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -550,12 +562,14 @@ fun SettingsScreen(
                         }
                     }
                 )
-                
+
                 Spacer(modifier = Modifier.height(12.dp))
-                
+
                 OutlinedTextField(
                     value = settingsState.precipAmountThreshold,
-                    onValueChange = { settingsState = settingsState.copy(precipAmountThreshold = it) },
+                    onValueChange = {
+                        settingsState = settingsState.copy(precipAmountThreshold = it)
+                    },
                     label = { Text(stringResource(R.string.amount_threshold_mm)) },
                     modifier = Modifier.fillMaxWidth(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -570,9 +584,9 @@ fun SettingsScreen(
                     }
                 )
             }
-            
+
             Spacer(modifier = Modifier.height(20.dp))
-            
+
             // Notification Time Section
             SettingsSection(
                 title = stringResource(R.string.notification_time),
@@ -582,7 +596,8 @@ fun SettingsScreen(
                     hour = settingsState.notificationHour,
                     minute = settingsState.notificationMinute,
                     onTimeChange = { h, m ->
-                        settingsState = settingsState.copy(notificationHour = h, notificationMinute = m)
+                        settingsState =
+                            settingsState.copy(notificationHour = h, notificationMinute = m)
                     }
                 )
             }
@@ -621,28 +636,38 @@ fun SettingsScreen(
                         )
                     }
                 }
-                
+
                 Spacer(modifier = Modifier.height(12.dp))
-                
+
                 Button(
                     onClick = {
                         coroutineScope.launch {
                             isTestingNotification = true
                             try {
                                 val appConfig = configRepository.getConfig()
-                                val lonStr = String.format(java.util.Locale.US, "%.4f", appConfig.longitude)
-                                val latStr = String.format(java.util.Locale.US, "%.3f", appConfig.latitude)
-                                
+                                val lonStr =
+                                    String.format(java.util.Locale.US, "%.4f", appConfig.longitude)
+                                val latStr =
+                                    String.format(java.util.Locale.US, "%.3f", appConfig.latitude)
+
                                 val response = apiService.getWeatherForecast(
                                     longitude = lonStr,
                                     latitude = latStr
                                 )
-                                val recommendations = analyzeWeatherForCommutes(response.timeSeries, appConfig, context)
+                                val recommendations = analyzeWeatherForCommutes(
+                                    response.timeSeries,
+                                    appConfig,
+                                    context
+                                )
                                 sendTestNotification(context, recommendations)
                                 showError = null
                                 // The notification itself serves as feedback
                             } catch (e: Exception) {
-                                showError = String.format(Locale.getDefault(), failedToTestNotificationFmt, e.message ?: "")
+                                showError = String.format(
+                                    Locale.getDefault(),
+                                    failedToTestNotificationFmt,
+                                    e.message ?: ""
+                                )
                             } finally {
                                 isTestingNotification = false
                             }
@@ -663,10 +688,10 @@ fun SettingsScreen(
                     }
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(80.dp)) // Space for bottom bar
         }
-        
+
         // Reset confirmation dialog
         if (showResetDialog) {
             AlertDialog(
@@ -691,7 +716,7 @@ fun SettingsScreen(
                 }
             )
         }
-        
+
         // Exit confirmation dialog
         if (showExitDialog) {
             AlertDialog(
@@ -745,7 +770,7 @@ private fun SettingsSection(
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-                
+
                 if (subtitle != null) {
                     Text(
                         text = subtitle,
@@ -754,13 +779,13 @@ private fun SettingsSection(
                     )
                 }
             }
-            
+
             HorizontalDivider(
                 modifier = Modifier.padding(vertical = 4.dp),
                 thickness = 1.dp,
                 color = MaterialTheme.colorScheme.outlineVariant
             )
-            
+
             content()
         }
     }
@@ -806,7 +831,7 @@ private fun CommuteTimeInput(
                     else -> null
                 }
             }
-            
+
             OutlinedTextField(
                 value = startHour,
                 onValueChange = onStartChange,
@@ -815,7 +840,14 @@ private fun CommuteTimeInput(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 singleLine = true,
                 isError = startError != null,
-                supportingText = startError?.let { { Text(it, color = MaterialTheme.colorScheme.error) } }
+                supportingText = startError?.let {
+                    {
+                        Text(
+                            it,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
             )
             OutlinedTextField(
                 value = endHour,
@@ -825,7 +857,14 @@ private fun CommuteTimeInput(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 singleLine = true,
                 isError = endError != null,
-                supportingText = endError?.let { { Text(it, color = MaterialTheme.colorScheme.error) } }
+                supportingText = endError?.let {
+                    {
+                        Text(
+                            it,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
             )
         }
     }
@@ -881,14 +920,15 @@ private fun ErrorCard(
 
 // Helper function to send test notification
 private fun sendTestNotification(context: Context, recommendations: CommuteRecommendations) {
-    val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    val notificationManager =
+        context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
     notificationManager.notify(999, buildWeatherNotification(context, recommendations))
 }
 
 // State management data class
 private data class SettingsState(
-    val longitude: String,
-    val latitude: String,
+    val longitude: Double,
+    val latitude: Double,
     val morningStart: String,
     val morningEnd: String,
     val eveningStart: String,
@@ -902,8 +942,8 @@ private data class SettingsState(
     companion object {
         fun fromConfig(config: AppConfig): SettingsState {
             return SettingsState(
-                longitude = String.format(java.util.Locale.US, "%.4f", config.longitude),
-                latitude = String.format(java.util.Locale.US, "%.3f", config.latitude),
+                longitude = config.longitude,
+                latitude = config.latitude,
                 morningStart = config.morningCommuteStartHour.toString(),
                 morningEnd = config.morningCommuteEndHour.toString(),
                 eveningStart = config.eveningCommuteStartHour.toString(),
@@ -919,14 +959,20 @@ private data class SettingsState(
 
     fun toConfig(fallbackConfig: AppConfig): AppConfig {
         return AppConfig(
-            longitude = longitude.toDoubleOrNull() ?: fallbackConfig.longitude,
-            latitude = latitude.toDoubleOrNull() ?: fallbackConfig.latitude,
-            morningCommuteStartHour = morningStart.toIntOrNull() ?: fallbackConfig.morningCommuteStartHour,
-            morningCommuteEndHour = morningEnd.toIntOrNull() ?: fallbackConfig.morningCommuteEndHour,
-            eveningCommuteStartHour = eveningStart.toIntOrNull() ?: fallbackConfig.eveningCommuteStartHour,
-            eveningCommuteEndHour = eveningEnd.toIntOrNull() ?: fallbackConfig.eveningCommuteEndHour,
-            precipitationProbabilityThreshold = precipProbThreshold.toDoubleOrNull() ?: fallbackConfig.precipitationProbabilityThreshold,
-            precipitationAmountThreshold = precipAmountThreshold.toDoubleOrNull() ?: fallbackConfig.precipitationAmountThreshold,
+            longitude = longitude,
+            latitude = latitude,
+            morningCommuteStartHour = morningStart.toIntOrNull()
+                ?: fallbackConfig.morningCommuteStartHour,
+            morningCommuteEndHour = morningEnd.toIntOrNull()
+                ?: fallbackConfig.morningCommuteEndHour,
+            eveningCommuteStartHour = eveningStart.toIntOrNull()
+                ?: fallbackConfig.eveningCommuteStartHour,
+            eveningCommuteEndHour = eveningEnd.toIntOrNull()
+                ?: fallbackConfig.eveningCommuteEndHour,
+            precipitationProbabilityThreshold = precipProbThreshold.toDoubleOrNull()
+                ?: fallbackConfig.precipitationProbabilityThreshold,
+            precipitationAmountThreshold = precipAmountThreshold.toDoubleOrNull()
+                ?: fallbackConfig.precipitationAmountThreshold,
             notificationDays = notificationDays,
             notificationHour = notificationHour,
             notificationMinute = notificationMinute
