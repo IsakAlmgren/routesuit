@@ -92,7 +92,7 @@
     <string name="commute_window_hint">Commute window: %1$s:00–%2$s:00</string>
     <string name="col_time">Time</string>
     <string name="col_temperature">Temp</string>
-    <string name="col_rain_chance">Rain %%</string>
+    <string name="col_rain_chance">Rain %</string>
     <string name="col_rain_amount">Amount</string>
     <string name="no_rain_expected">No Rain Expected</string>
     <string name="skip_rain_gear">You can skip the rain gear today</string>
