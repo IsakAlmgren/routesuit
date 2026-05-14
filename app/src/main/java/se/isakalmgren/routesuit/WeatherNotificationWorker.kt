@@ -1,11 +1,7 @@
 package se.isakalmgren.routesuit
 
-import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.app.PendingIntent
 import android.content.Context
-import android.content.Intent
-import androidx.core.app.NotificationCompat
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import org.koin.core.component.KoinComponent
@@ -58,71 +54,7 @@ class WeatherNotificationWorker(
     
     private fun sendNotification(recommendations: CommuteRecommendations) {
         val notificationManager = applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        
-        // Create notification channel for Android O and above
-        val channelId = "weather_forecast_channel"
-        val channelName = applicationContext.getString(R.string.notification_channel_name)
-        val importance = NotificationManager.IMPORTANCE_DEFAULT
-        val channel = NotificationChannel(channelId, channelName, importance)
-        notificationManager.createNotificationChannel(channel)
-        
-        // Build notification message with both commutes
-        val message = buildString {
-            if (recommendations.morningCommute != null) {
-                append(applicationContext.getString(R.string.notification_to_work))
-                append(applicationContext.getString(R.string.temperature_format, recommendations.morningCommute.temperature))
-                if (recommendations.morningCommute.needsRainClothes) {
-                    if (recommendations.morningCommute.rainForLater) {
-                        append(applicationContext.getString(R.string.notification_bring_rain_gear_later))
-                    } else {
-                        append(applicationContext.getString(R.string.notification_rain_clothes_needed))
-                    }
-                }
-                if (recommendations.eveningCommute != null) {
-                    append("\n")
-                }
-            }
-            if (recommendations.eveningCommute != null) {
-                append(applicationContext.getString(R.string.notification_from_work))
-                append(applicationContext.getString(R.string.temperature_format, recommendations.eveningCommute.temperature))
-                if (recommendations.eveningCommute.needsRainClothes) {
-                    append(applicationContext.getString(R.string.notification_rain_clothes_needed))
-                }
-            }
-        }
-        
-        // Determine if rain clothes are needed for either commute
-        val needsRainClothes = recommendations.morningCommute?.needsRainClothes == true || 
-                               recommendations.eveningCommute?.needsRainClothes == true
-        
-        val title = if (needsRainClothes) {
-            applicationContext.getString(R.string.bring_rain_clothes_today)
-        } else {
-            applicationContext.getString(R.string.weather_update)
-        }
-        
-        // Create intent to open MainActivity when notification is tapped
-        val intent = Intent(applicationContext, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-        }
-        val pendingIntent = PendingIntent.getActivity(
-            applicationContext,
-            0,
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-        
-        val notification = NotificationCompat.Builder(applicationContext, channelId)
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
-            .setContentTitle(title)
-            .setContentText(message)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(message))
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .setAutoCancel(true)
-            .setContentIntent(pendingIntent)
-            .build()
-        
-        notificationManager.notify(1, notification)
+        notificationManager.notify(1, buildWeatherNotification(applicationContext, recommendations))
     }
 }
 

@@ -19,9 +19,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import se.isakalmgren.routesuit.R
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLocale
+import androidx.compose.ui.res.stringResource
+import android.text.format.DateFormat
+import se.isakalmgren.routesuit.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -30,12 +32,14 @@ fun NotificationTimeInput(
     minute: Int,
     onTimeChange: (hour: Int, minute: Int) -> Unit
 ) {
+    val context = LocalContext.current
+    val is24Hour = DateFormat.is24HourFormat(context)
     var showDialog by remember { mutableStateOf(false) }
     // dialogRevision increments each time the dialog opens, forcing TimePickerState
     // to re-initialise from the committed hour/minute rather than showing stale edits.
     var dialogRevision by remember { mutableIntStateOf(0) }
     val timePickerState = remember(dialogRevision) {
-        TimePickerState(initialHour = hour, initialMinute = minute, is24Hour = true)
+        TimePickerState(initialHour = hour, initialMinute = minute, is24Hour = is24Hour)
     }
 
     Row(
@@ -43,8 +47,15 @@ fun NotificationTimeInput(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
+        val displayText = if (is24Hour) {
+            String.format(LocalLocale.current.platformLocale, "%02d:%02d", hour, minute)
+        } else {
+            val h12 = if (hour % 12 == 0) 12 else hour % 12
+            val amPm = if (hour < 12) "AM" else "PM"
+            String.format(LocalLocale.current.platformLocale, "%d:%02d %s", h12, minute, amPm)
+        }
         Text(
-            text = String.format(LocalLocale.current.platformLocale, "%02d:%02d", hour, minute),
+            text = displayText,
             style = MaterialTheme.typography.headlineMedium,
             color = MaterialTheme.colorScheme.primary
         )

@@ -29,9 +29,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import android.app.Activity
-import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -39,8 +37,8 @@ import android.os.PowerManager
 import android.provider.Settings
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Warning
-import androidx.core.app.NotificationCompat
 import java.util.Calendar
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,7 +53,19 @@ fun SettingsScreen(
     val configState = configRepository.config.collectAsState()
     val currentConfig = configState.value
     val context = LocalContext.current
-    
+
+    // Pre-captured strings for use in lambdas and remember blocks
+    val couldNotGetLocationMsg = stringResource(R.string.could_not_get_location)
+    val errorGettingLocationFmt = stringResource(R.string.error_getting_location)
+    val locationPermissionDeniedMsg = stringResource(R.string.location_permission_denied)
+    val failedToSaveSettingsFmt = stringResource(R.string.failed_to_save_settings)
+    val failedToTestNotificationFmt = stringResource(R.string.failed_to_test_notification)
+    val requiredStr = stringResource(R.string.required)
+    val invalidNumberStr = stringResource(R.string.invalid_number)
+    val mustBeBetweenFmt = stringResource(R.string.must_be_between)
+    val mustBe0To100Str = stringResource(R.string.must_be_0_to_100)
+    val mustBePositiveStr = stringResource(R.string.must_be_positive)
+
     // State management using a data class for better organization
     var settingsState by remember(currentConfig) {
         mutableStateOf(SettingsState.fromConfig(currentConfig))
@@ -87,16 +97,16 @@ fun SettingsScreen(
                             latitude = String.format(java.util.Locale.US, "%.4f", location.second)
                         )
                     } else {
-                        showError = context.getString(R.string.could_not_get_location)
+                        showError = couldNotGetLocationMsg
                     }
                 } catch (e: Exception) {
-                    showError = context.getString(R.string.error_getting_location, e.message ?: "")
+                    showError = String.format(Locale.getDefault(), errorGettingLocationFmt, e.message ?: "")
                 } finally {
                     isFetchingLocation = false
                 }
             }
         } else {
-            showError = context.getString(R.string.location_permission_denied)
+            showError = locationPermissionDeniedMsg
         }
     }
     
@@ -119,10 +129,10 @@ fun SettingsScreen(
                             latitude = String.format(java.util.Locale.US, "%.4f", location.second)
                         )
                     } else {
-                        showError = context.getString(R.string.could_not_get_location)
+                        showError = couldNotGetLocationMsg
                     }
                 } catch (e: Exception) {
-                    showError = context.getString(R.string.error_getting_location, e.message ?: "")
+                    showError = String.format(Locale.getDefault(), errorGettingLocationFmt, e.message ?: "")
                 } finally {
                     isFetchingLocation = false
                 }
@@ -171,10 +181,10 @@ fun SettingsScreen(
                 }
             }
         } catch (e: Exception) {
-            showError = context.getString(R.string.failed_to_save_settings, e.message ?: "")
+            showError = String.format(Locale.getDefault(), failedToSaveSettingsFmt, e.message ?: "")
         }
     }
-    
+
     fun handleBackNavigation() {
         if (hasChanges) {
             showExitDialog = true
@@ -392,19 +402,19 @@ fun SettingsScreen(
                 val longitudeError = remember(settingsState.longitude) {
                     val lon = settingsState.longitude.toDoubleOrNull()
                     when {
-                        settingsState.longitude.isBlank() -> context.getString(R.string.required)
-                        lon == null -> context.getString(R.string.invalid_number)
-                        lon < -180 || lon > 180 -> context.getString(R.string.must_be_between, "-180", "180")
+                        settingsState.longitude.isBlank() -> requiredStr
+                        lon == null -> invalidNumberStr
+                        lon < -180 || lon > 180 -> String.format(Locale.getDefault(), mustBeBetweenFmt, "-180", "180")
                         else -> null
                     }
                 }
-                
+
                 val latitudeError = remember(settingsState.latitude) {
                     val lat = settingsState.latitude.toDoubleOrNull()
                     when {
-                        settingsState.latitude.isBlank() -> context.getString(R.string.required)
-                        lat == null -> context.getString(R.string.invalid_number)
-                        lat < -90 || lat > 90 -> context.getString(R.string.must_be_between, "-90", "90")
+                        settingsState.latitude.isBlank() -> requiredStr
+                        lat == null -> invalidNumberStr
+                        lat < -90 || lat > 90 -> String.format(Locale.getDefault(), mustBeBetweenFmt, "-90", "90")
                         else -> null
                     }
                 }
@@ -507,19 +517,19 @@ fun SettingsScreen(
                 val probError = remember(settingsState.precipProbThreshold) {
                     val prob = settingsState.precipProbThreshold.toDoubleOrNull()
                     when {
-                        settingsState.precipProbThreshold.isBlank() -> context.getString(R.string.required)
-                        prob == null -> context.getString(R.string.invalid_number)
-                        prob < 0 || prob > 100 -> context.getString(R.string.must_be_0_to_100)
+                        settingsState.precipProbThreshold.isBlank() -> requiredStr
+                        prob == null -> invalidNumberStr
+                        prob < 0 || prob > 100 -> mustBe0To100Str
                         else -> null
                     }
                 }
-                
+
                 val amountError = remember(settingsState.precipAmountThreshold) {
                     val amount = settingsState.precipAmountThreshold.toDoubleOrNull()
                     when {
-                        settingsState.precipAmountThreshold.isBlank() -> context.getString(R.string.required)
-                        amount == null -> context.getString(R.string.invalid_number)
-                        amount < 0 -> context.getString(R.string.must_be_positive)
+                        settingsState.precipAmountThreshold.isBlank() -> requiredStr
+                        amount == null -> invalidNumberStr
+                        amount < 0 -> mustBePositiveStr
                         else -> null
                     }
                 }
@@ -650,7 +660,7 @@ fun SettingsScreen(
                                 showError = null
                                 // The notification itself serves as feedback
                             } catch (e: Exception) {
-                                showError = context.getString(R.string.failed_to_test_notification, e.message ?: "")
+                                showError = String.format(Locale.getDefault(), failedToTestNotificationFmt, e.message ?: "")
                             } finally {
                                 isTestingNotification = false
                             }
@@ -782,7 +792,9 @@ private fun CommuteTimeInput(
     onStartChange: (String) -> Unit,
     onEndChange: (String) -> Unit
 ) {
-    val context = LocalContext.current
+    val requiredStr = stringResource(R.string.required)
+    val invalidNumberStr = stringResource(R.string.invalid_number)
+    val mustBe0To23Str = stringResource(R.string.must_be_0_to_23)
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
             text = label,
@@ -796,19 +808,19 @@ private fun CommuteTimeInput(
             val startError = remember(startHour) {
                 val hour = startHour.toIntOrNull()
                 when {
-                    startHour.isBlank() -> context.getString(R.string.required)
-                    hour == null -> context.getString(R.string.invalid_number)
-                    hour < 0 || hour > 23 -> context.getString(R.string.must_be_0_to_23)
+                    startHour.isBlank() -> requiredStr
+                    hour == null -> invalidNumberStr
+                    hour < 0 || hour > 23 -> mustBe0To23Str
                     else -> null
                 }
             }
-            
+
             val endError = remember(endHour) {
                 val hour = endHour.toIntOrNull()
                 when {
-                    endHour.isBlank() -> context.getString(R.string.required)
-                    hour == null -> context.getString(R.string.invalid_number)
-                    hour < 0 || hour > 23 -> context.getString(R.string.must_be_0_to_23)
+                    endHour.isBlank() -> requiredStr
+                    hour == null -> invalidNumberStr
+                    hour < 0 || hour > 23 -> mustBe0To23Str
                     else -> null
                 }
             }
@@ -888,71 +900,7 @@ private fun ErrorCard(
 // Helper function to send test notification
 private fun sendTestNotification(context: Context, recommendations: CommuteRecommendations) {
     val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-    
-    // Create notification channel for Android O and above
-    val channelId = "weather_forecast_channel"
-    val channelName = context.getString(R.string.notification_channel_name)
-    val importance = NotificationManager.IMPORTANCE_DEFAULT
-    val channel = NotificationChannel(channelId, channelName, importance)
-    notificationManager.createNotificationChannel(channel)
-    
-    // Build notification message with both commutes
-    val message = buildString {
-        if (recommendations.morningCommute != null) {
-            append(context.getString(R.string.notification_to_work))
-            append(context.getString(R.string.temperature_format, recommendations.morningCommute.temperature))
-            if (recommendations.morningCommute.needsRainClothes) {
-                if (recommendations.morningCommute.rainForLater) {
-                    append(context.getString(R.string.notification_bring_rain_gear_later))
-                } else {
-                    append(context.getString(R.string.notification_rain_clothes_needed))
-                }
-            }
-            if (recommendations.eveningCommute != null) {
-                append("\n")
-            }
-        }
-        if (recommendations.eveningCommute != null) {
-            append(context.getString(R.string.notification_from_work))
-            append(context.getString(R.string.temperature_format, recommendations.eveningCommute.temperature))
-            if (recommendations.eveningCommute.needsRainClothes) {
-                append(context.getString(R.string.notification_rain_clothes_needed))
-            }
-        }
-    }
-    
-    // Determine if rain clothes are needed for either commute
-    val needsRainClothes = recommendations.morningCommute?.needsRainClothes == true || 
-                           recommendations.eveningCommute?.needsRainClothes == true
-    
-    val title = if (needsRainClothes) {
-        context.getString(R.string.bring_rain_clothes_today)
-    } else {
-        context.getString(R.string.weather_update)
-    }
-    
-    // Create intent to open MainActivity when notification is tapped
-    val intent = Intent(context, MainActivity::class.java).apply {
-        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-    }
-    val pendingIntent = PendingIntent.getActivity(
-        context,
-        0,
-        intent,
-        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-    )
-    
-    val notification = NotificationCompat.Builder(context, channelId)
-        .setSmallIcon(android.R.drawable.ic_dialog_info)
-        .setContentTitle(title)
-        .setContentText(message)
-        .setStyle(NotificationCompat.BigTextStyle().bigText(message))
-        .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-        .setAutoCancel(true)
-        .setContentIntent(pendingIntent)
-        .build()
-    
-    notificationManager.notify(999, notification) // Use different ID (999) for test notifications
+    notificationManager.notify(999, buildWeatherNotification(context, recommendations))
 }
 
 // State management data class

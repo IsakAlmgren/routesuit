@@ -24,6 +24,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import se.isakalmgren.routesuit.AppConfig
+import se.isakalmgren.routesuit.Constants
 import se.isakalmgren.routesuit.R
 import se.isakalmgren.routesuit.TimeSeries
 import se.isakalmgren.routesuit.WeatherRecommendation
@@ -46,7 +47,7 @@ fun WeatherDetailSheet(
 ) {
     val date = recommendation.date ?: return
 
-    val windowBuffer = 3
+    val windowBuffer = Constants.DETAIL_SHEET_BUFFER_HOURS
     val dayEntries: List<Pair<ZonedDateTime, TimeSeries>> = timeSeries
         .mapNotNull { entry ->
             val time = parseTime(entry.time, config) ?: return@mapNotNull null

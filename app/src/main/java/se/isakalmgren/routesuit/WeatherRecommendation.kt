@@ -108,7 +108,7 @@ fun analyzeWeatherForCommute(
         localTime?.let {
             val hour = it.hour
             // Only include times in the future and within the hour range
-            hour in startHour until endHour && it.isAfter(now)
+            hour in startHour..endHour && it.isAfter(now)
         } ?: false
     }
     

@@ -26,13 +26,13 @@ class ConfigRepository(
         val defaultConfig = AppConfig()
         
         return AppConfig(
-            longitude = prefs.getFloat("longitude", defaultConfig.longitude.toFloat()).toDouble(),
-            latitude = prefs.getFloat("latitude", defaultConfig.latitude.toFloat()).toDouble(),
+            longitude = loadDouble("longitude", defaultConfig.longitude),
+            latitude = loadDouble("latitude", defaultConfig.latitude),
             morningCommuteStartHour = prefs.getInt("morning_commute_start", 7),
             morningCommuteEndHour = prefs.getInt("morning_commute_end", 9),
             eveningCommuteStartHour = prefs.getInt("evening_commute_start", 16),
             eveningCommuteEndHour = prefs.getInt("evening_commute_end", 19),
-            precipitationProbabilityThreshold = prefs.getFloat("precip_prob_threshold", 50.0f).toDouble(),
+            precipitationProbabilityThreshold = prefs.getFloat("precip_prob_threshold", defaultConfig.precipitationProbabilityThreshold.toFloat()).toDouble(),
             precipitationAmountThreshold = prefs.getFloat("precip_amount_threshold", 0.5f).toDouble(),
             notificationDays = loadNotificationDays(),
             notificationHour = prefs.getInt("notification_hour", Constants.NOTIFICATION_DEFAULT_HOUR),
@@ -50,10 +50,23 @@ class ConfigRepository(
         }
     }
     
+    // Reads a Double stored as Long bits (new format), with Float fallback for migration.
+    // On the first save after migration the old Float key is removed.
+    private fun loadDouble(key: String, default: Double): Double {
+        val bitsKey = "${key}_bits"
+        return when {
+            prefs.contains(bitsKey) -> Double.fromBits(prefs.getLong(bitsKey, default.toBits()))
+            prefs.contains(key) -> prefs.getFloat(key, default.toFloat()).toDouble()
+            else -> default
+        }
+    }
+
     fun saveConfig(config: AppConfig) {
         prefs.edit().apply {
-            putFloat("longitude", config.longitude.toFloat())
-            putFloat("latitude", config.latitude.toFloat())
+            putLong("longitude_bits", config.longitude.toBits())
+            putLong("latitude_bits", config.latitude.toBits())
+            remove("longitude")
+            remove("latitude")
             putInt("morning_commute_start", config.morningCommuteStartHour)
             putInt("morning_commute_end", config.morningCommuteEndHour)
             putInt("evening_commute_start", config.eveningCommuteStartHour)
