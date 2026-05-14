@@ -5,12 +5,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import android.content.Context
 import android.os.PowerManager
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
@@ -24,7 +19,6 @@ import androidx.compose.runtime.setValue
 import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -38,6 +32,8 @@ import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 import java.io.IOException
 import retrofit2.HttpException
+import se.isakalmgren.routesuit.ui.BatteryOptimizationBanner
+import se.isakalmgren.routesuit.ui.WeatherTopAppBar
 import timber.log.Timber
 
 sealed class WeatherUiState {
@@ -49,10 +45,11 @@ sealed class WeatherUiState {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WeatherScreen(
+    modifier: Modifier = Modifier,
     apiService: SmhiApiService = koinInject(),
     configRepository: ConfigRepository = koinInject(),
     onSettingsClick: () -> Unit = {},
-    modifier: Modifier = Modifier
+
 ) {
     val configState = configRepository.config.collectAsState()
     val appConfig = configState.value
@@ -384,46 +381,6 @@ private fun InfoCard(
 }
 
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun WeatherTopAppBar(onSettingsClick: () -> Unit) {
-    TopAppBar(
-        navigationIcon = {
-            Icon(
-                painter = painterResource(id = R.drawable.ic_launcher_foreground),
-                contentDescription = stringResource(R.string.content_description_app_icon),
-                modifier = Modifier
-                    .padding(start = 16.dp)
-                    .size(50.dp),
-                tint = MaterialTheme.colorScheme.primary
-            )
-        },
-        title = {
-            Text(
-                text = stringResource(R.string.app_name),
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
-                letterSpacing = 0.5.sp,
-                modifier = Modifier
-                    .padding(start = 16.dp)
-            )
-        },
-        actions = {
-            IconButton(onClick = onSettingsClick) {
-                Icon(
-                    imageVector = Icons.Filled.Settings,
-                    contentDescription = stringResource(R.string.content_description_settings),
-                    tint = MaterialTheme.colorScheme.onSurface
-                )
-            }
-        },
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
-    )
-}
-
 private fun formatTimestamp(timestamp: Long, context: android.content.Context): String {
     val dateTime = java.time.Instant.ofEpochMilli(timestamp)
         .atZone(java.time.ZoneId.systemDefault())
@@ -485,48 +442,6 @@ private fun NoCommuteDataCard() {
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-    }
-}
-
-@Composable
-private fun BatteryOptimizationBanner(
-    onSettingsClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        onClick = onSettingsClick,
-        modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.errorContainer
-        ),
-        shape = MaterialTheme.shapes.medium
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Warning,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onErrorContainer,
-                modifier = Modifier.size(20.dp)
-            )
-            Text(
-                text = stringResource(R.string.battery_optimization_banner),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onErrorContainer,
-                modifier = Modifier.weight(1f)
-            )
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onErrorContainer,
-                modifier = Modifier.size(18.dp)
-            )
-        }
     }
 }
 
@@ -746,31 +661,6 @@ fun WeatherScreenPreview_Error() {
                     title = "Error",
                     message = "Failed to fetch weather: Network error",
                     onRetry = { }
-                )
-            }
-        }
-    }
-}
-
-@Preview(showBackground = true, name = "Top App Bar")
-@Composable
-fun WeatherTopAppBarPreview() {
-    RouteSuitTheme {
-        Scaffold(
-            topBar = {
-                WeatherTopAppBar(onSettingsClick = {})
-            }
-        ) { innerPadding ->
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-            ) {
-                Text(
-                    text = "Content area",
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .padding(16.dp)
                 )
             }
         }
