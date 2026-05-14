@@ -1,5 +1,13 @@
 package se.isakalmgren.routesuit.ui
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -16,6 +24,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -55,6 +64,7 @@ sealed class WeatherUiState {
         val timeSeries: List<TimeSeries>,
         val lastUpdated: Long = System.currentTimeMillis()
     ) : WeatherUiState()
+
     data class Error(val title: String, val message: String) : WeatherUiState()
 }
 
@@ -97,7 +107,11 @@ fun WeatherScreen(
                 )
                 val recommendations =
                     analyzeWeatherForCommutes(response.timeSeries, appConfig, context)
-                uiState = WeatherUiState.Success(recommendations, response.timeSeries, System.currentTimeMillis())
+                uiState = WeatherUiState.Success(
+                    recommendations,
+                    response.timeSeries,
+                    System.currentTimeMillis()
+                )
                 Timber.d("Weather data fetched successfully")
             } catch (e: SocketTimeoutException) {
                 Timber.e(e, "Connection timeout while fetching weather")
@@ -178,117 +192,152 @@ fun WeatherScreen(
                     )
                 }
 
-                when (val state = uiState) {
-                    is WeatherUiState.Loading -> {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(32.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(16.dp)
-                            ) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(48.dp),
-                                    strokeWidth = 4.dp
-                                )
-                                Text(
-                                    text = stringResource(R.string.loading_weather_forecast),
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-                    }
-
-                    is WeatherUiState.Success -> {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 8.dp),
-                            verticalArrangement = Arrangement.spacedBy(20.dp)
-                        ) {
-                            // Data freshness indicator
-                            val timestamp = formatTimestamp(state.lastUpdated, context)
-                            val isStale =
-                                (System.currentTimeMillis() - state.lastUpdated) > Constants.STALE_DATA_THRESHOLD_HOURS * 60 * 60 * 1000
-
-                            Row(
+                AnimatedContent(
+                    targetState = uiState,
+                    contentKey = { it::class },
+                    transitionSpec = {
+                        fadeIn(spring(stiffness = Spring.StiffnessMediumLow)) togetherWith
+                                fadeOut(spring(stiffness = Spring.StiffnessMediumLow))
+                    },
+                    label = "weather_state"
+                ) { state ->
+                    when (state) {
+                        is WeatherUiState.Loading -> {
+                            Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(bottom = 8.dp),
-                                horizontalArrangement = Arrangement.Center,
-                                verticalAlignment = Alignment.CenterVertically
+                                    .padding(32.dp),
+                                contentAlignment = Alignment.Center
                             ) {
-                                Text(
-                                    text = context.getString(R.string.last_updated, timestamp),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                if (isStale) {
-                                    Spacer(modifier = Modifier.width(8.dp))
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                                ) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(48.dp),
+                                        strokeWidth = 4.dp
+                                    )
                                     Text(
-                                        text = context.getString(R.string.data_stale_warning),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.error
+                                        text = stringResource(R.string.loading_weather_forecast),
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
                             }
+                        }
 
-                            val toWorkTitle = stringResource(R.string.to_work)
-                            val fromWorkTitle = stringResource(R.string.from_work)
+                        is WeatherUiState.Success -> {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                                verticalArrangement = Arrangement.spacedBy(20.dp)
+                            ) {
+                                val timestamp = formatTimestamp(state.lastUpdated, context)
+                                val isStale =
+                                    (System.currentTimeMillis() - state.lastUpdated) > Constants.STALE_DATA_THRESHOLD_HOURS * 60 * 60 * 1000
 
-                            if (state.recommendations.morningCommute != null) {
-                                WeatherRecommendationCard(
-                                    recommendation = state.recommendations.morningCommute,
-                                    title = toWorkTitle,
-                                    onClick = {
-                                        detailSheetArgs = DetailSheetArgs(
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(bottom = 8.dp),
+                                    horizontalArrangement = Arrangement.Center,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = context.getString(R.string.last_updated, timestamp),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    if (isStale) {
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = context.getString(R.string.data_stale_warning),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.error
+                                        )
+                                    }
+                                }
+
+                                val toWorkTitle = stringResource(R.string.to_work)
+                                val fromWorkTitle = stringResource(R.string.from_work)
+
+                                var morningVisible by remember { mutableStateOf(false) }
+                                var eveningVisible by remember { mutableStateOf(false) }
+                                LaunchedEffect(Unit) {
+                                    morningVisible = true
+                                    delay(100)
+                                    eveningVisible = true
+                                }
+
+                                val cardEnter = scaleIn(
+                                    spring(
+                                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                                        stiffness = Spring.StiffnessMedium
+                                    ),
+                                    initialScale = 0.92f
+                                ) + fadeIn(spring(stiffness = Spring.StiffnessMedium))
+
+                                if (state.recommendations.morningCommute != null) {
+                                    AnimatedVisibility(
+                                        visible = morningVisible,
+                                        enter = cardEnter
+                                    ) {
+                                        WeatherRecommendationCard(
                                             recommendation = state.recommendations.morningCommute,
-                                            timeSeries = state.timeSeries,
-                                            commuteStartHour = appConfig.morningCommuteStartHour,
-                                            commuteEndHour = appConfig.morningCommuteEndHour,
-                                            title = toWorkTitle
+                                            title = toWorkTitle,
+                                            onClick = {
+                                                detailSheetArgs = DetailSheetArgs(
+                                                    recommendation = state.recommendations.morningCommute,
+                                                    timeSeries = state.timeSeries,
+                                                    commuteStartHour = appConfig.morningCommuteStartHour,
+                                                    commuteEndHour = appConfig.morningCommuteEndHour,
+                                                    title = toWorkTitle
+                                                )
+                                            }
                                         )
                                     }
-                                )
-                            }
+                                }
 
-                            if (state.recommendations.eveningCommute != null) {
-                                WeatherRecommendationCard(
-                                    recommendation = state.recommendations.eveningCommute,
-                                    title = fromWorkTitle,
-                                    onClick = {
-                                        detailSheetArgs = DetailSheetArgs(
+                                if (state.recommendations.eveningCommute != null) {
+                                    AnimatedVisibility(
+                                        visible = eveningVisible,
+                                        enter = cardEnter
+                                    ) {
+                                        WeatherRecommendationCard(
                                             recommendation = state.recommendations.eveningCommute,
-                                            timeSeries = state.timeSeries,
-                                            commuteStartHour = appConfig.eveningCommuteStartHour,
-                                            commuteEndHour = appConfig.eveningCommuteEndHour,
-                                            title = fromWorkTitle
+                                            title = fromWorkTitle,
+                                            onClick = {
+                                                detailSheetArgs = DetailSheetArgs(
+                                                    recommendation = state.recommendations.eveningCommute,
+                                                    timeSeries = state.timeSeries,
+                                                    commuteStartHour = appConfig.eveningCommuteStartHour,
+                                                    commuteEndHour = appConfig.eveningCommuteEndHour,
+                                                    title = fromWorkTitle
+                                                )
+                                            }
                                         )
                                     }
-                                )
-                            }
+                                }
 
-                            if (state.recommendations.morningCommute == null && state.recommendations.eveningCommute == null) {
-                                NoCommuteDataCard()
+                                if (state.recommendations.morningCommute == null && state.recommendations.eveningCommute == null) {
+                                    NoCommuteDataCard()
+                                }
                             }
                         }
-                    }
 
-                    is WeatherUiState.Error -> {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp)
-                        ) {
-                            ErrorCard(
-                                title = state.title,
-                                message = state.message,
-                                onRetry = { fetchWeather() }
-                            )
+                        is WeatherUiState.Error -> {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp)
+                            ) {
+                                ErrorCard(
+                                    title = state.title,
+                                    message = state.message,
+                                    onRetry = { fetchWeather() }
+                                )
+                            }
                         }
                     }
                 }
@@ -391,13 +440,14 @@ fun WeatherScreenPreview_Success() {
                     rainForLater = false,
                     dayLabel = "Tomorrow"
                 )
-                val morningRecommendation = morningRecommendationBase.copy(message = generateRecommendationMessage(
-                    morningRecommendationBase,
-                    appConfig,
-                    context
+                val morningRecommendation = morningRecommendationBase.copy(
+                    message = generateRecommendationMessage(
+                        morningRecommendationBase,
+                        appConfig,
+                        context
+                    )
                 )
-                )
-                
+
                 val eveningRecommendationBase = WeatherRecommendation(
                     needsRainClothes = false,
                     temperature = 10.0,
@@ -408,23 +458,24 @@ fun WeatherScreenPreview_Success() {
                     rainForLater = false,
                     dayLabel = "Today"
                 )
-                val eveningRecommendation = eveningRecommendationBase.copy(message = generateRecommendationMessage(
-                    eveningRecommendationBase,
-                    appConfig,
-                    context
+                val eveningRecommendation = eveningRecommendationBase.copy(
+                    message = generateRecommendationMessage(
+                        eveningRecommendationBase,
+                        appConfig,
+                        context
+                    )
                 )
-                )
-                
+
                 WeatherRecommendationCard(
                     recommendation = morningRecommendation,
                     title = "To Work"
                 )
-                
+
                 WeatherRecommendationCard(
                     recommendation = eveningRecommendation,
                     title = "From Work"
                 )
-                
+
                 Button(
                     onClick = { },
                     modifier = Modifier.padding(top = 8.dp)

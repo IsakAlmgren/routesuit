@@ -1,5 +1,8 @@
 package se.isakalmgren.routesuit.ui
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,6 +14,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -31,8 +35,14 @@ fun WeatherRecommendationCard(
     title: String = "",
     onClick: () -> Unit = {}
 ) {
-    val cardColor =
-        if (recommendation.anyRainToday) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.surfaceContainerLow
+    val cardColor by animateColorAsState(
+        targetValue = if (recommendation.anyRainToday)
+            MaterialTheme.colorScheme.errorContainer
+        else
+            MaterialTheme.colorScheme.surfaceContainerLow,
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        label = "card_color"
+    )
     OutlinedCard(
         onClick = onClick,
         modifier = Modifier

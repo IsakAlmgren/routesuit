@@ -137,6 +137,13 @@
     <string name="friday">Fredag</string>
     <string name="saturday">Lördag</string>
     <string name="sunday">Söndag</string>
+    <string name="monday_short">Mån</string>
+    <string name="tuesday_short">Tis</string>
+    <string name="wednesday_short">Ons</string>
+    <string name="thursday_short">Tor</string>
+    <string name="friday_short">Fre</string>
+    <string name="saturday_short">Lör</string>
+    <string name="sunday_short">Sön</string>
     <string name="test_notification">Testa notifikation</string>
     <string name="testing_notification">Testar…</string>
     <string name="test_notification_sent">Testnotifikation skickad!</string>

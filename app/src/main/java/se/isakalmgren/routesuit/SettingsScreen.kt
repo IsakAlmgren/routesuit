@@ -2,6 +2,7 @@ package se.isakalmgren.routesuit
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -23,7 +24,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.ui.res.stringResource
-import androidx.compose.foundation.clickable
 import se.isakalmgren.routesuit.ui.widget.NotificationTimeInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -603,39 +603,21 @@ fun SettingsScreen(
                     Calendar.SATURDAY to stringResource(R.string.saturday),
                     Calendar.SUNDAY to stringResource(R.string.sunday)
                 )
-                
-                daysOfWeek.forEach { (dayOfWeek, dayName) ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                val currentDays = settingsState.notificationDays.toMutableSet()
-                                if (currentDays.contains(dayOfWeek)) {
-                                    currentDays.remove(dayOfWeek)
-                                } else {
-                                    currentDays.add(dayOfWeek)
-                                }
-                                settingsState = settingsState.copy(notificationDays = currentDays)
-                            }
-                            .padding(vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Checkbox(
-                            checked = settingsState.notificationDays.contains(dayOfWeek),
-                            onCheckedChange = { checked ->
-                                val currentDays = settingsState.notificationDays.toMutableSet()
-                                if (checked) {
-                                    currentDays.add(dayOfWeek)
-                                } else {
-                                    currentDays.remove(dayOfWeek)
-                                }
-                                settingsState = settingsState.copy(notificationDays = currentDays)
-                            }
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = dayName,
-                            style = MaterialTheme.typography.bodyLarge
+
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    daysOfWeek.forEach { (dayOfWeek, dayName) ->
+                        FilterChip(
+                            selected = settingsState.notificationDays.contains(dayOfWeek),
+                            onClick = {
+                                val current = settingsState.notificationDays.toMutableSet()
+                                if (current.contains(dayOfWeek)) current.remove(dayOfWeek)
+                                else current.add(dayOfWeek)
+                                settingsState = settingsState.copy(notificationDays = current)
+                            },
+                            label = { Text(dayName) }
                         )
                     }
                 }
