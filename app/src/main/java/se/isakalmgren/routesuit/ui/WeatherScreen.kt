@@ -42,6 +42,7 @@ import se.isakalmgren.routesuit.analyzeWeatherForCommutes
 import se.isakalmgren.routesuit.generateRecommendationMessage
 import timber.log.Timber
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -254,9 +255,13 @@ private fun formatTimestamp(timestamp: Long, context: Context): String {
     val dateTime = Instant.ofEpochMilli(timestamp)
         .atZone(ZoneId.systemDefault())
         .toLocalDateTime()
-    
-    val formatter = DateTimeFormatter.ofPattern("HH:mm", Locale.getDefault())
-    return dateTime.format(formatter)
+    val timeFormatter = DateTimeFormatter.ofPattern("HH:mm", Locale.getDefault())
+    return if (dateTime.toLocalDate() == LocalDate.now()) {
+        dateTime.format(timeFormatter)
+    } else {
+        val dateFormatter = DateTimeFormatter.ofPattern("d MMM HH:mm", Locale.getDefault())
+        dateTime.format(dateFormatter)
+    }
 }
 
 @Composable

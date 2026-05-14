@@ -2,25 +2,20 @@ package se.isakalmgren.routesuit.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -35,7 +30,7 @@ fun WeatherRecommendationCard(
     recommendation: WeatherRecommendation, title: String = ""
 ) {
     val cardColor =
-        if (recommendation.rainForLater || recommendation.needsRainClothes) MaterialTheme.colorScheme.errorContainer else CardDefaults.cardColors().containerColor
+        if (recommendation.anyRainToday) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.surfaceContainerLow
     OutlinedCard(
         modifier = Modifier
             .fillMaxWidth()
@@ -44,50 +39,59 @@ fun WeatherRecommendationCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(
-            modifier = Modifier.padding(8.dp),
+            modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
                 text = if (recommendation.anyRainToday) "🌧" else "☀️",
-                Modifier.padding(end = 8.dp),
-                fontSize = 24.sp
+                fontSize = 36.sp
             )
-
-
-
-            Column() {
-                Text(
-                    text = title, fontWeight = FontWeight.W500, fontSize = 20.sp
-                )
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    if (recommendation.dayLabel.isNotEmpty()) {
+                        Text(
+                            text = recommendation.dayLabel,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
                 Text(
                     text = if (recommendation.rainForLater) {
                         stringResource(R.string.bring_rain_clothes_later)
                     } else if (recommendation.needsRainClothes) {
                         stringResource(R.string.bring_rain_clothes)
                     } else stringResource(R.string.no_rain_expected),
-                    fontWeight = FontWeight.W400,
-                    fontSize = 20.sp,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = if (recommendation.anyRainToday) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSurface
                 )
                 if (recommendation.rainForLater) {
                     Text(
                         text = stringResource(R.string.rain_expected_later),
-                        modifier = Modifier.padding(top = 8.dp),
-                        color = MaterialTheme.colorScheme.onErrorContainer,
-                        textAlign = TextAlign.Center
+                        modifier = Modifier.padding(top = 4.dp),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onErrorContainer
                     )
                 }
             }
-
-            // Temperature display
             Text(
                 text = stringResource(R.string.temperature_format, recommendation.temperature),
-                fontSize = 30.sp,
+                style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.W600,
-                color = MaterialTheme.colorScheme.primary,
-                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.primary
             )
-
         }
     }
 }

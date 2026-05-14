@@ -48,11 +48,7 @@ fun WeatherTopAppBar(onSettingsClick: () -> Unit) {
                 fontWeight = FontWeight.W400,
                 color = MaterialTheme.colorScheme.primary,
                 letterSpacing = 0.5.sp,
-                modifier = Modifier
-                    .padding(start = 16.dp),
                 textAlign = TextAlign.Center
-
-
             )
         },
         actions = {
