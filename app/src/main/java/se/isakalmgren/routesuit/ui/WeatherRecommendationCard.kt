@@ -3,11 +3,15 @@ package se.isakalmgren.routesuit.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -28,40 +32,62 @@ import se.isakalmgren.routesuit.ui.theme.RouteSuitTheme
 
 @Composable
 fun WeatherRecommendationCard(
-    recommendation: WeatherRecommendation,
-    title: String = ""
+    recommendation: WeatherRecommendation, title: String = ""
 ) {
-    Card(
-        modifier = Modifier.Companion.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        shape = MaterialTheme.shapes.large
+    val cardColor =
+        if (recommendation.rainForLater || recommendation.needsRainClothes) MaterialTheme.colorScheme.errorContainer else CardDefaults.cardColors().containerColor
+    OutlinedCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .wrapContentHeight(),
+        colors = CardDefaults.cardColors(containerColor = cardColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
-        Column(
-            modifier = Modifier.Companion.padding(20.dp),
-            horizontalAlignment = Alignment.Companion.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+        Row(
+            modifier = Modifier.padding(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            // Title
-            if (title.isNotEmpty()) {
-                RecommendationTitle(title = title, dayLabel = recommendation.dayLabel)
+            Text(
+                text = if (recommendation.anyRainToday) "🌧" else "☀️",
+                Modifier.padding(end = 8.dp),
+                fontSize = 24.sp
+            )
+
+
+
+            Column() {
+                Text(
+                    text = title, fontWeight = FontWeight.W500, fontSize = 20.sp
+                )
+                Text(
+                    text = if (recommendation.rainForLater) {
+                        stringResource(R.string.bring_rain_clothes_later)
+                    } else if (recommendation.needsRainClothes) {
+                        stringResource(R.string.bring_rain_clothes)
+                    } else stringResource(R.string.no_rain_expected),
+                    fontWeight = FontWeight.W400,
+                    fontSize = 20.sp,
+                    color = if (recommendation.anyRainToday) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSurface
+                )
+                if (recommendation.rainForLater) {
+                    Text(
+                        text = stringResource(R.string.rain_expected_later),
+                        modifier = Modifier.padding(top = 8.dp),
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        textAlign = TextAlign.Center
+                    )
+                }
             }
 
             // Temperature display
             Text(
                 text = stringResource(R.string.temperature_format, recommendation.temperature),
-                fontSize = 56.sp,
-                fontWeight = FontWeight.Companion.Bold,
+                fontSize = 30.sp,
+                fontWeight = FontWeight.W600,
                 color = MaterialTheme.colorScheme.primary,
-                textAlign = TextAlign.Companion.Center,
-                modifier = Modifier.Companion.fillMaxWidth(),
-                style = MaterialTheme.typography.displayMedium
+                textAlign = TextAlign.Center,
             )
 
-            // Rain clothes recommendation
-            RainRecommendationCard(recommendation = recommendation)
         }
     }
 }
@@ -85,14 +111,11 @@ fun WeatherRecommendationCardPreview_MorningRain() {
         )
         val recommendation = recommendationBase.copy(
             message = generateRecommendationMessage(
-                recommendationBase,
-                appConfig,
-                context
+                recommendationBase, appConfig, context
             )
         )
         WeatherRecommendationCard(
-            recommendation = recommendation,
-            title = "To Work"
+            recommendation = recommendation, title = "To Work"
         )
     }
 }
@@ -115,14 +138,11 @@ fun WeatherRecommendationCardPreview_MorningRainForLater() {
         )
         val recommendation = recommendationBase.copy(
             message = generateRecommendationMessage(
-                recommendationBase,
-                appConfig,
-                context
+                recommendationBase, appConfig, context
             )
         )
         WeatherRecommendationCard(
-            recommendation = recommendation,
-            title = "To Work"
+            recommendation = recommendation, title = "To Work"
         )
     }
 }
@@ -145,14 +165,11 @@ fun WeatherRecommendationCardPreview_MorningNoRain() {
         )
         val recommendation = recommendationBase.copy(
             message = generateRecommendationMessage(
-                recommendationBase,
-                appConfig,
-                context
+                recommendationBase, appConfig, context
             )
         )
         WeatherRecommendationCard(
-            recommendation = recommendation,
-            title = "To Work"
+            recommendation = recommendation, title = "To Work"
         )
     }
 }
@@ -175,14 +192,11 @@ fun WeatherRecommendationCardPreview_EveningRain() {
         )
         val recommendation = recommendationBase.copy(
             message = generateRecommendationMessage(
-                recommendationBase,
-                appConfig,
-                context
+                recommendationBase, appConfig, context
             )
         )
         WeatherRecommendationCard(
-            recommendation = recommendation,
-            title = "From Work"
+            recommendation = recommendation, title = "From Work"
         )
     }
 }
@@ -205,115 +219,12 @@ fun WeatherRecommendationCardPreview_EveningNoRain() {
         )
         val recommendation = recommendationBase.copy(
             message = generateRecommendationMessage(
-                recommendationBase,
-                appConfig,
-                context
+                recommendationBase, appConfig, context
             )
         )
         WeatherRecommendationCard(
-            recommendation = recommendation,
-            title = "From Work"
+            recommendation = recommendation, title = "From Work"
         )
     }
 }
 
-@Composable
-private fun RecommendationTitle(title: String, dayLabel: String) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.padding(bottom = 4.dp)
-    ) {
-        Text(
-            text = title,
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface,
-            style = MaterialTheme.typography.titleLarge
-        )
-        if (dayLabel.isNotEmpty()) {
-            Text(
-                text = dayLabel,
-                fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 4.dp),
-                style = MaterialTheme.typography.bodyMedium
-            )
-        }
-    }
-}
-
-@Composable
-private fun RainRecommendationCard(recommendation: WeatherRecommendation) {
-    if (recommendation.needsRainClothes) {
-        InfoCard(
-            containerColor = MaterialTheme.colorScheme.errorContainer,
-        ) {
-            Text(
-                text = if (recommendation.rainForLater) {
-                    stringResource(R.string.bring_rain_clothes_later)
-                } else {
-                    stringResource(R.string.bring_rain_clothes)
-                },
-                fontWeight = FontWeight.Bold,
-                fontSize = 20.sp,
-                color = MaterialTheme.colorScheme.onErrorContainer
-            )
-            if (recommendation.rainForLater) {
-                Text(
-                    text = stringResource(R.string.rain_expected_later),
-                    modifier = Modifier.padding(top = 8.dp),
-                    color = MaterialTheme.colorScheme.onErrorContainer,
-                    textAlign = TextAlign.Center
-                )
-            } else {
-                Text(
-                    text = stringResource(R.string.precipitation_probability, recommendation.precipitationProbability.toInt()),
-                    modifier = Modifier.padding(top = 8.dp),
-                    color = MaterialTheme.colorScheme.onErrorContainer
-                )
-                if (recommendation.precipitationAmount > 0) {
-                    Text(
-                        text = stringResource(R.string.expected_precipitation, recommendation.precipitationAmount),
-                        color = MaterialTheme.colorScheme.onErrorContainer
-                    )
-                }
-            }
-        }
-    } else {
-        InfoCard(
-            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-        ) {
-            Text(
-                text = stringResource(R.string.no_rain_expected),
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp,
-                color = MaterialTheme.colorScheme.onTertiaryContainer
-            )
-            Text(
-                text = stringResource(R.string.skip_rain_gear),
-                modifier = Modifier.padding(top = 8.dp),
-                color = MaterialTheme.colorScheme.onTertiaryContainer
-            )
-        }
-    }
-}
-
-@Composable
-private fun InfoCard(
-    containerColor: Color = MaterialTheme.colorScheme.surfaceContainer,
-    content: @Composable ColumnScope.() -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-        colors = CardDefaults.cardColors(containerColor = containerColor),
-        shape = MaterialTheme.shapes.medium
-    ) {
-        Column(
-            modifier = Modifier.padding(18.dp).fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            content = content
-        )
-    }
-}

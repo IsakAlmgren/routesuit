@@ -82,27 +82,27 @@
     <string name="data_stale_warning">⚠️ Data may be outdated</string>
     
     <!-- Weather Recommendation Cards -->
-    <string name="bring_rain_clothes">🌧️ Rain Clothes Needed!</string>
-    <string name="bring_rain_clothes_later">🌧️ Bring Rain Clothes for Later!</string>
+    <string name="bring_rain_clothes">Rain Clothes Needed!</string>
+    <string name="bring_rain_clothes_later">Bring Rain Clothes for Later!</string>
     <string name="rain_expected_later">Rain expected on your way home</string>
     <string name="precipitation_probability">Precipitation probability: %1$d%%</string>
     <string name="expected_precipitation">Expected: %1$.1f mm</string>
-    <string name="no_rain_expected">☀️ No Rain Expected</string>
+    <string name="no_rain_expected">No Rain Expected</string>
     <string name="skip_rain_gear">You can skip the rain gear today</string>
-    <string name="bring_rain_clothes_message">🌧️ Bring rain clothes! </string>
-    <string name="bring_rain_clothes_for_later_message">🌧️ Bring rain clothes for later! </string>
+    <string name="bring_rain_clothes_message">Bring rain clothes! </string>
+    <string name="bring_rain_clothes_for_later_message">Bring rain clothes for later! </string>
     <string name="rain_expected_home">Rain expected on your way home (%1$d%% chance, %2$.1f mm)</string>
     <string name="no_rain_expected_message">\n☀️ No rain expected</string>
     
     <!-- Notifications -->
     <string name="notification_channel_name">Weather Forecast</string>
-    <string name="bring_rain_clothes_today">🌧️ Bring Rain Clothes Today!</string>
+    <string name="bring_rain_clothes_today">Bring Rain Clothes Today!</string>
     <string name="weather_update">☀️ Weather Update</string>
     <string name="notification_to_work">🌅 To Work: </string>
     <string name="notification_from_work">🌆 From Work: </string>
-    <string name="notification_bring_rain_gear_later"> 🌧️ Bring rain gear for later!</string>
-    <string name="notification_rain_clothes_needed"> 🌧️ Rain clothes needed</string>
-    <string name="temperature_format">%1$.1f°C</string>
+    <string name="notification_bring_rain_gear_later"> Bring rain gear for later!</string>
+    <string name="notification_rain_clothes_needed"> Rain clothes needed</string>
+    <string name="temperature_format">%1$.1f°</string>
     
     <!-- Date/Time Labels -->
     <string name="today">Today</string>

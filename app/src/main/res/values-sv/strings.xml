@@ -82,17 +82,17 @@
     <string name="data_stale_warning">⚠️ Data kan vara föråldrad</string>
     
     <!-- Weather Recommendation Cards -->
-    <string name="bring_rain_clothes">🌧️ Regnkläder behövs!</string>
-    <string name="bring_rain_clothes_later">🌧️ Ta med regnkläder för senare!</string>
+    <string name="bring_rain_clothes">Regnkläder behövs!</string>
+    <string name="bring_rain_clothes_later">Ta med regnkläder för senare!</string>
     <string name="rain_expected_later">Regn förväntas på vägen hem</string>
     <string name="precipitation_probability">Nedbördsannolikhet: %1$d%%</string>
     <string name="expected_precipitation">Förväntat: %1$.1f mm</string>
-    <string name="no_rain_expected">☀️ Inget regn förväntas</string>
+    <string name="no_rain_expected">Inget regn förväntas</string>
     <string name="skip_rain_gear">Du kan skippa regnkläderna idag</string>
-    <string name="bring_rain_clothes_message">🌧️ Ta med regnkläder! </string>
-    <string name="bring_rain_clothes_for_later_message">🌧️ Ta med regnkläder för senare! </string>
+    <string name="bring_rain_clothes_message">Ta med regnkläder! </string>
+    <string name="bring_rain_clothes_for_later_message">Ta med regnkläder för senare! </string>
     <string name="rain_expected_home">Regn förväntas på vägen hem (%1$d%% chans, %2$.1f mm)</string>
-    <string name="no_rain_expected_message">\n☀️ Inget regn förväntas</string>
+    <string name="no_rain_expected_message">\nInget regn förväntas</string>
     
     <!-- Notifications -->
     <string name="notification_channel_name">Väderprognos</string>
@@ -102,7 +102,7 @@
     <string name="notification_from_work">🌆 Från jobbet: </string>
     <string name="notification_bring_rain_gear_later"> 🌧️ Ta med regnkläder för senare!</string>
     <string name="notification_rain_clothes_needed"> 🌧️ Regnkläder behövs</string>
-    <string name="temperature_format">%1$.1f°C</string>
+    <string name="temperature_format">%1$.1f°</string>
     
     <!-- Date/Time Labels -->
     <string name="today">Idag</string>

@@ -17,7 +17,9 @@ data class WeatherRecommendation(
     val timeWindow: String = "",
     val rainForLater: Boolean = false, // True if rain is needed for later in the day, not during this commute
     val date: LocalDate? = null, // The date this recommendation is for
-    val dayLabel: String = "" // "Today" or "Tomorrow" or formatted date
+    val dayLabel: String = "", // "Today" or "Tomorrow" or formatted date
+
+    val anyRainToday: Boolean = needsRainClothes || rainForLater
 )
 
 data class CommuteRecommendations(
