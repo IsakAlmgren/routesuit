@@ -87,6 +87,8 @@
     <string name="rain_expected_later">Regn förväntas på vägen hem</string>
     <string name="precipitation_probability">Nedbördsannolikhet: %1$d%%</string>
     <string name="expected_precipitation">Förväntat: %1$.1f mm</string>
+    <string name="rain_chance">%1$d%% chans</string>
+    <string name="rain_amount">%1$.1f mm</string>
     <string name="no_rain_expected">Inget regn förväntas</string>
     <string name="skip_rain_gear">Du kan skippa regnkläderna idag</string>
     <string name="bring_rain_clothes_message">Ta med regnkläder! </string>

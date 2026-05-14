@@ -87,6 +87,8 @@
     <string name="rain_expected_later">Rain expected on your way home</string>
     <string name="precipitation_probability">Precipitation probability: %1$d%%</string>
     <string name="expected_precipitation">Expected: %1$.1f mm</string>
+    <string name="rain_chance">%1$d%% chance</string>
+    <string name="rain_amount">%1$.1f mm</string>
     <string name="no_rain_expected">No Rain Expected</string>
     <string name="skip_rain_gear">You can skip the rain gear today</string>
     <string name="bring_rain_clothes_message">Bring rain clothes! </string>

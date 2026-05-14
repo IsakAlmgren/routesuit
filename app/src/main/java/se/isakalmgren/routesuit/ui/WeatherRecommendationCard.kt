@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -39,17 +40,25 @@ fun WeatherRecommendationCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(20.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(
-                text = if (recommendation.anyRainToday) "🌧" else "☀️",
-                fontSize = 36.sp
-            )
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = if (recommendation.anyRainToday) "🌧" else "☀️",
+                    fontSize = 36.sp,
+                )
+                Text(
+                    text = stringResource(R.string.temperature_format, recommendation.temperature),
+                    style = MaterialTheme.typography.headlineLarge,
+                    fontWeight = FontWeight.W600,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(2.dp)
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -57,13 +66,13 @@ fun WeatherRecommendationCard(
                 ) {
                     Text(
                         text = title,
-                        style = MaterialTheme.typography.titleMedium,
+                        style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.SemiBold
                     )
                     if (recommendation.dayLabel.isNotEmpty()) {
                         Text(
                             text = recommendation.dayLabel,
-                            style = MaterialTheme.typography.bodySmall,
+                            style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -74,24 +83,51 @@ fun WeatherRecommendationCard(
                     } else if (recommendation.needsRainClothes) {
                         stringResource(R.string.bring_rain_clothes)
                     } else stringResource(R.string.no_rain_expected),
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodyLarge,
                     color = if (recommendation.anyRainToday) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSurface
                 )
+                val statsColor = if (recommendation.anyRainToday)
+                    MaterialTheme.colorScheme.onErrorContainer
+                else
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = stringResource(
+                            R.string.rain_chance,
+                            recommendation.precipitationProbability.toInt()
+                        ),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = statsColor
+                    )
+                    if (recommendation.precipitationAmount > 0) {
+                        Text(
+                            text = "·",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = statsColor
+                        )
+                        Text(
+                            text = stringResource(
+                                R.string.rain_amount,
+                                recommendation.precipitationAmount
+                            ),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = statsColor
+                        )
+                    }
+                }
                 if (recommendation.rainForLater) {
                     Text(
                         text = stringResource(R.string.rain_expected_later),
-                        modifier = Modifier.padding(top = 4.dp),
-                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(top = 2.dp),
+                        style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onErrorContainer
                     )
                 }
             }
-            Text(
-                text = stringResource(R.string.temperature_format, recommendation.temperature),
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.W600,
-                color = MaterialTheme.colorScheme.primary
-            )
+
         }
     }
 }
