@@ -37,6 +37,7 @@ import se.isakalmgren.routesuit.ConfigRepository
 import se.isakalmgren.routesuit.Constants
 import se.isakalmgren.routesuit.R
 import se.isakalmgren.routesuit.SmhiApiService
+import se.isakalmgren.routesuit.TimeSeries
 import se.isakalmgren.routesuit.WeatherRecommendation
 import se.isakalmgren.routesuit.analyzeWeatherForCommutes
 import se.isakalmgren.routesuit.generateRecommendationMessage
@@ -49,9 +50,21 @@ import java.util.Locale
 
 sealed class WeatherUiState {
     data object Loading : WeatherUiState()
-    data class Success(val recommendations: CommuteRecommendations, val lastUpdated: Long = System.currentTimeMillis()) : WeatherUiState()
+    data class Success(
+        val recommendations: CommuteRecommendations,
+        val timeSeries: List<TimeSeries>,
+        val lastUpdated: Long = System.currentTimeMillis()
+    ) : WeatherUiState()
     data class Error(val title: String, val message: String) : WeatherUiState()
 }
+
+private data class DetailSheetArgs(
+    val recommendation: WeatherRecommendation,
+    val timeSeries: List<TimeSeries>,
+    val commuteStartHour: Int,
+    val commuteEndHour: Int,
+    val title: String
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -67,6 +80,7 @@ fun WeatherScreen(
     val context = LocalContext.current
 
     var uiState by remember { mutableStateOf<WeatherUiState>(WeatherUiState.Loading) }
+    var detailSheetArgs by remember { mutableStateOf<DetailSheetArgs?>(null) }
     val coroutineScope = rememberCoroutineScope()
 
     fun fetchWeather() {
@@ -83,7 +97,7 @@ fun WeatherScreen(
                 )
                 val recommendations =
                     analyzeWeatherForCommutes(response.timeSeries, appConfig, context)
-                uiState = WeatherUiState.Success(recommendations, System.currentTimeMillis())
+                uiState = WeatherUiState.Success(recommendations, response.timeSeries, System.currentTimeMillis())
                 Timber.d("Weather data fetched successfully")
             } catch (e: SocketTimeoutException) {
                 Timber.e(e, "Connection timeout while fetching weather")
@@ -119,6 +133,18 @@ fun WeatherScreen(
 
     LaunchedEffect(appConfig) {
         fetchWeather()
+    }
+
+    detailSheetArgs?.let { args ->
+        WeatherDetailSheet(
+            recommendation = args.recommendation,
+            timeSeries = args.timeSeries,
+            config = appConfig,
+            title = args.title,
+            commuteStartHour = args.commuteStartHour,
+            commuteEndHour = args.commuteEndHour,
+            onDismiss = { detailSheetArgs = null }
+        )
     }
 
     Scaffold(
@@ -211,17 +237,38 @@ fun WeatherScreen(
                                 }
                             }
 
+                            val toWorkTitle = stringResource(R.string.to_work)
+                            val fromWorkTitle = stringResource(R.string.from_work)
+
                             if (state.recommendations.morningCommute != null) {
                                 WeatherRecommendationCard(
                                     recommendation = state.recommendations.morningCommute,
-                                    title = stringResource(R.string.to_work)
+                                    title = toWorkTitle,
+                                    onClick = {
+                                        detailSheetArgs = DetailSheetArgs(
+                                            recommendation = state.recommendations.morningCommute,
+                                            timeSeries = state.timeSeries,
+                                            commuteStartHour = appConfig.morningCommuteStartHour,
+                                            commuteEndHour = appConfig.morningCommuteEndHour,
+                                            title = toWorkTitle
+                                        )
+                                    }
                                 )
                             }
 
                             if (state.recommendations.eveningCommute != null) {
                                 WeatherRecommendationCard(
                                     recommendation = state.recommendations.eveningCommute,
-                                    title = stringResource(R.string.from_work)
+                                    title = fromWorkTitle,
+                                    onClick = {
+                                        detailSheetArgs = DetailSheetArgs(
+                                            recommendation = state.recommendations.eveningCommute,
+                                            timeSeries = state.timeSeries,
+                                            commuteStartHour = appConfig.eveningCommuteStartHour,
+                                            commuteEndHour = appConfig.eveningCommuteEndHour,
+                                            title = fromWorkTitle
+                                        )
+                                    }
                                 )
                             }
 

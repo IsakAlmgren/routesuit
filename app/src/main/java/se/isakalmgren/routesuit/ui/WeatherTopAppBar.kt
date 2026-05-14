@@ -35,7 +35,7 @@ fun WeatherTopAppBar(onSettingsClick: () -> Unit) {
             Icon(
                 painter = painterResource(id = R.drawable.ic_launcher_foreground),
                 contentDescription = stringResource(R.string.content_description_app_icon),
-                modifier = Modifier.Companion
+                modifier = Modifier
                     .padding(start = 16.dp)
                     .size(50.dp),
                 tint = MaterialTheme.colorScheme.primary
@@ -76,14 +76,14 @@ fun WeatherTopAppBarPreview() {
             }
         ) { innerPadding ->
             Box(
-                modifier = Modifier.Companion
+                modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
             ) {
                 Text(
                     text = "Content area",
-                    modifier = Modifier.Companion
-                        .align(Alignment.Companion.Center)
+                    modifier = Modifier
+                        .align(Alignment.Center)
                         .padding(16.dp)
                 )
             }
