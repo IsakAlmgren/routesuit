@@ -32,8 +32,8 @@ class ConfigRepository(
             morningCommuteEndHour = prefs.getInt("morning_commute_end", 9),
             eveningCommuteStartHour = prefs.getInt("evening_commute_start", 16),
             eveningCommuteEndHour = prefs.getInt("evening_commute_end", 19),
-            precipitationProbabilityThreshold = prefs.getFloat("precip_prob_threshold", defaultConfig.precipitationProbabilityThreshold.toFloat()).toDouble(),
-            precipitationAmountThreshold = prefs.getFloat("precip_amount_threshold", 0.5f).toDouble(),
+            precipitationProbabilityThreshold = loadDouble("precip_prob_threshold", defaultConfig.precipitationProbabilityThreshold),
+            precipitationAmountThreshold = loadDouble("precip_amount_threshold", defaultConfig.precipitationAmountThreshold),
             notificationDays = loadNotificationDays(),
             notificationHour = prefs.getInt("notification_hour", Constants.NOTIFICATION_DEFAULT_HOUR),
             notificationMinute = prefs.getInt("notification_minute", Constants.NOTIFICATION_DEFAULT_MINUTE)
@@ -71,8 +71,10 @@ class ConfigRepository(
             putInt("morning_commute_end", config.morningCommuteEndHour)
             putInt("evening_commute_start", config.eveningCommuteStartHour)
             putInt("evening_commute_end", config.eveningCommuteEndHour)
-            putFloat("precip_prob_threshold", config.precipitationProbabilityThreshold.toFloat())
-            putFloat("precip_amount_threshold", config.precipitationAmountThreshold.toFloat())
+            putLong("precip_prob_threshold_bits", config.precipitationProbabilityThreshold.toBits())
+            putLong("precip_amount_threshold_bits", config.precipitationAmountThreshold.toBits())
+            remove("precip_prob_threshold")
+            remove("precip_amount_threshold")
             putString("notification_days", config.notificationDays.joinToString(","))
             putInt("notification_hour", config.notificationHour)
             putInt("notification_minute", config.notificationMinute)
