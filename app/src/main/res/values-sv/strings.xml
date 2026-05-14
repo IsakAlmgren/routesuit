@@ -83,7 +83,7 @@
     
     <!-- Weather Recommendation Cards -->
     <string name="bring_rain_clothes">Regnkläder behövs!</string>
-    <string name="bring_rain_clothes_later">Ta med regnkläder för senare!</string>
+    <string name="bring_rain_clothes_later">Ta med regnkläder för hemvägen!</string>
     <string name="rain_expected_later">Regn förväntas på vägen hem</string>
     <string name="precipitation_probability">Nedbördsannolikhet: %1$d%%</string>
     <string name="expected_precipitation">Förväntat: %1$.1f mm</string>

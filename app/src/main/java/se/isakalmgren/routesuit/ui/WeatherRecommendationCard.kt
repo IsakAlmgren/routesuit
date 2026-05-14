@@ -118,14 +118,6 @@ fun WeatherRecommendationCard(
                         )
                     }
                 }
-                if (recommendation.rainForLater) {
-                    Text(
-                        text = stringResource(R.string.rain_expected_later),
-                        modifier = Modifier.padding(top = 2.dp),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onErrorContainer
-                    )
-                }
             }
 
         }

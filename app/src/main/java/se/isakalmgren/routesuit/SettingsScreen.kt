@@ -44,12 +44,12 @@ import java.util.Calendar
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
+    modifier: Modifier = Modifier,
     navController: NavController,
     configRepository: ConfigRepository = koinInject(),
     locationHelper: LocationHelper = koinInject(),
     languageRepository: LanguageRepository = koinInject(),
-    apiService: SmhiApiService = koinInject(),
-    modifier: Modifier = Modifier
+    apiService: SmhiApiService = koinInject()
 ) {
     val configState = configRepository.config.collectAsState()
     val currentConfig = configState.value
@@ -719,10 +719,7 @@ private fun SettingsSection(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+
         shape = MaterialTheme.shapes.medium
     ) {
         Column(

@@ -158,17 +158,20 @@ fun analyzeWeatherForCommute(
 fun analyzeWeatherForCommutes(timeSeries: List<TimeSeries>, config: AppConfig, context: Context): CommuteRecommendations {
     val now = ZonedDateTime.now(config.timezone)
     val currentHour = now.hour
-    
-    // Morning commute: using config timespan
-    // Only show if the morning window hasn't passed today
-    val morningCommuteRaw = if (currentHour < config.morningCommuteEndHour) {
+
+    // Once both commutes are done for the day, advance both to tomorrow so the
+    // user always sees a matched morning+evening pair rather than only tomorrow's evening.
+    val allTodayCommutesAreDone = currentHour >= config.eveningCommuteEndHour
+
+    // Morning commute: show today's if not yet past, show tomorrow's if all done, hide otherwise.
+    val morningCommuteRaw = if (allTodayCommutesAreDone || currentHour < config.morningCommuteEndHour) {
         val startDisplay = formatHourForDisplay(config.morningCommuteStartHour, context)
         val endDisplay = formatHourForDisplay(config.morningCommuteEndHour, context)
         val commuteName = context.getString(R.string.morning_commute_time, startDisplay, endDisplay)
         analyzeWeatherForCommute(
-            timeSeries, 
-            config.morningCommuteStartHour, 
-            config.morningCommuteEndHour, 
+            timeSeries,
+            config.morningCommuteStartHour,
+            config.morningCommuteEndHour,
             commuteName,
             config,
             context
