@@ -34,7 +34,9 @@ class ConfigRepository(
             eveningCommuteEndHour = prefs.getInt("evening_commute_end", 19),
             precipitationProbabilityThreshold = prefs.getFloat("precip_prob_threshold", 50.0f).toDouble(),
             precipitationAmountThreshold = prefs.getFloat("precip_amount_threshold", 0.5f).toDouble(),
-            notificationDays = loadNotificationDays()
+            notificationDays = loadNotificationDays(),
+            notificationHour = prefs.getInt("notification_hour", Constants.NOTIFICATION_DEFAULT_HOUR),
+            notificationMinute = prefs.getInt("notification_minute", Constants.NOTIFICATION_DEFAULT_MINUTE)
         )
     }
     
@@ -58,8 +60,9 @@ class ConfigRepository(
             putInt("evening_commute_end", config.eveningCommuteEndHour)
             putFloat("precip_prob_threshold", config.precipitationProbabilityThreshold.toFloat())
             putFloat("precip_amount_threshold", config.precipitationAmountThreshold.toFloat())
-            // Save notification days as comma-separated string
             putString("notification_days", config.notificationDays.joinToString(","))
+            putInt("notification_hour", config.notificationHour)
+            putInt("notification_minute", config.notificationMinute)
             apply()
         }
         _config.value = config

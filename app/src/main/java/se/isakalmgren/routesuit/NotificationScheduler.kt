@@ -15,15 +15,13 @@ object NotificationScheduler {
     
     fun scheduleDailyNotification(context: Context, configRepository: ConfigRepository? = null) {
         val workManager = WorkManager.getInstance(context)
-        
-        // Get config to check allowed notification days
-        val allowedDays = configRepository?.getConfig()?.notificationDays 
-            ?: AppConfig().notificationDays
-        
-        // Find next allowed day
+
+        val config = configRepository?.getConfig() ?: AppConfig()
+        val allowedDays = config.notificationDays
+
         val calendar = Calendar.getInstance()
-        calendar.set(Calendar.HOUR_OF_DAY, Constants.NOTIFICATION_DEFAULT_HOUR)
-        calendar.set(Calendar.MINUTE, Constants.NOTIFICATION_DEFAULT_MINUTE)
+        calendar.set(Calendar.HOUR_OF_DAY, config.notificationHour)
+        calendar.set(Calendar.MINUTE, config.notificationMinute)
         calendar.set(Calendar.SECOND, 0)
         calendar.set(Calendar.MILLISECOND, 0)
         
@@ -71,15 +69,13 @@ object NotificationScheduler {
     
     fun scheduleNextDay(context: Context, configRepository: ConfigRepository? = null) {
         val workManager = WorkManager.getInstance(context)
-        
-        // Get config to check allowed notification days
-        val allowedDays = configRepository?.getConfig()?.notificationDays 
-            ?: AppConfig().notificationDays
-        
-        // Calculate next notification time and find next allowed day
+
+        val config = configRepository?.getConfig() ?: AppConfig()
+        val allowedDays = config.notificationDays
+
         val calendar = Calendar.getInstance()
-        calendar.set(Calendar.HOUR_OF_DAY, Constants.NOTIFICATION_DEFAULT_HOUR)
-        calendar.set(Calendar.MINUTE, Constants.NOTIFICATION_DEFAULT_MINUTE)
+        calendar.set(Calendar.HOUR_OF_DAY, config.notificationHour)
+        calendar.set(Calendar.MINUTE, config.notificationMinute)
         calendar.set(Calendar.SECOND, 0)
         calendar.set(Calendar.MILLISECOND, 0)
         

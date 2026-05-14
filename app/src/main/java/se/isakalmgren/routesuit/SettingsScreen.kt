@@ -24,6 +24,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.clickable
+import se.isakalmgren.routesuit.ui.widget.NotificationTimeInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
@@ -562,6 +563,22 @@ fun SettingsScreen(
             
             Spacer(modifier = Modifier.height(20.dp))
             
+            // Notification Time Section
+            SettingsSection(
+                title = stringResource(R.string.notification_time),
+                subtitle = stringResource(R.string.notification_time_subtitle)
+            ) {
+                NotificationTimeInput(
+                    hour = settingsState.notificationHour,
+                    minute = settingsState.notificationMinute,
+                    onTimeChange = { h, m ->
+                        settingsState = settingsState.copy(notificationHour = h, notificationMinute = m)
+                    }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
             // Notification Days Section
             SettingsSection(
                 title = stringResource(R.string.notification_days),
@@ -948,7 +965,9 @@ private data class SettingsState(
     val eveningEnd: String,
     val precipProbThreshold: String,
     val precipAmountThreshold: String,
-    val notificationDays: Set<Int>
+    val notificationDays: Set<Int>,
+    val notificationHour: Int,
+    val notificationMinute: Int
 ) {
     companion object {
         fun fromConfig(config: AppConfig): SettingsState {
@@ -961,11 +980,13 @@ private data class SettingsState(
                 eveningEnd = config.eveningCommuteEndHour.toString(),
                 precipProbThreshold = config.precipitationProbabilityThreshold.toString(),
                 precipAmountThreshold = config.precipitationAmountThreshold.toString(),
-                notificationDays = config.notificationDays
+                notificationDays = config.notificationDays,
+                notificationHour = config.notificationHour,
+                notificationMinute = config.notificationMinute
             )
         }
     }
-    
+
     fun toConfig(fallbackConfig: AppConfig): AppConfig {
         return AppConfig(
             longitude = longitude.toDoubleOrNull() ?: fallbackConfig.longitude,
@@ -976,7 +997,9 @@ private data class SettingsState(
             eveningCommuteEndHour = eveningEnd.toIntOrNull() ?: fallbackConfig.eveningCommuteEndHour,
             precipitationProbabilityThreshold = precipProbThreshold.toDoubleOrNull() ?: fallbackConfig.precipitationProbabilityThreshold,
             precipitationAmountThreshold = precipAmountThreshold.toDoubleOrNull() ?: fallbackConfig.precipitationAmountThreshold,
-            notificationDays = notificationDays
+            notificationDays = notificationDays,
+            notificationHour = notificationHour,
+            notificationMinute = notificationMinute
         )
     }
 }

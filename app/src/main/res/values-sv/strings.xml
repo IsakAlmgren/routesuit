@@ -125,6 +125,9 @@
     <string name="language_swedish">Svenska</string>
     
     <!-- Notification Days Settings -->
+    <string name="notification_time">Notifikationstid</string>
+    <string name="notification_time_subtitle">När den dagliga vädernotifikationen ska skickas</string>
+    <string name="change_time">Ändra</string>
     <string name="notification_days">Notifikationsdagar</string>
     <string name="notification_days_subtitle">Välj vilka dagar du vill få vädernotifikationer</string>
     <string name="monday">Måndag</string>

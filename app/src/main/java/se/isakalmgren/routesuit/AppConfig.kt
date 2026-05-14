@@ -31,7 +31,9 @@ data class AppConfig(
         Calendar.WEDNESDAY,
         Calendar.THURSDAY,
         Calendar.FRIDAY
-    )
+    ),
+    val notificationHour: Int = Constants.NOTIFICATION_DEFAULT_HOUR,
+    val notificationMinute: Int = Constants.NOTIFICATION_DEFAULT_MINUTE,
 ) {
     // Always use the system default timezone
     val timezone: ZoneId
