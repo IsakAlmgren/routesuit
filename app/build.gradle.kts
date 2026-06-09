@@ -1,29 +1,86 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
 }
 
+val keystoreProps = Properties().apply {
+    val f = rootProject.file("keystore.properties")
+    if (f.exists()) load(f.inputStream())
+}
+
+// Derive versionCode from git tag (e.g. v1.2.3 → 10203). Falls back to 1 locally.
+fun gitVersionCode(): Int {
+    return try {
+        val tag = providers.exec {
+            commandLine("git", "describe", "--tags", "--match", "v*", "--abbrev=0")
+        }.standardOutput.asText.get().trim()
+        val parts = tag.removePrefix("v").split(".")
+        val major = parts.getOrNull(0)?.toIntOrNull() ?: 0
+        val minor = parts.getOrNull(1)?.toIntOrNull() ?: 0
+        val patch = parts.getOrNull(2)?.toIntOrNull() ?: 0
+        major * 10000 + minor * 100 + patch
+    } catch (_: Exception) { 1 }
+}
+
+fun gitVersionName(): String {
+    return try {
+        providers.exec {
+            commandLine("git", "describe", "--tags", "--match", "v*", "--abbrev=0")
+        }.standardOutput.asText.get().trim().removePrefix("v")
+    } catch (_: Exception) { "1.0" }
+}
+
 android {
-    namespace = "se.isakalmgren.routesuit"
+    namespace = "se.mildtanke.routesuit"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "se.isakalmgren.routesuit"
+        applicationId = "se.mildtanke.routesuit"
         minSdk = 31
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = gitVersionCode()
+        versionName = gitVersionName()
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        create("release") {
+            val keystoreBase64 = System.getenv("KEYSTORE_BASE64")
+            when {
+                keystoreBase64 != null -> {
+                    val keystoreFile = File(rootProject.buildDir, "release.keystore")
+                    keystoreFile.parentFile.mkdirs()
+                    keystoreFile.writeBytes(java.util.Base64.getDecoder().decode(keystoreBase64))
+                    storeFile = keystoreFile
+                    storePassword = System.getenv("STORE_PASSWORD")
+                    keyAlias = System.getenv("KEY_ALIAS")
+                    keyPassword = System.getenv("KEY_PASSWORD")
+                }
+                keystoreProps.containsKey("storeFile") -> {
+                    storeFile = file(keystoreProps["storeFile"] as String)
+                    storePassword = keystoreProps["storePassword"] as String
+                    keyAlias = keystoreProps["keyAlias"] as String
+                    keyPassword = keystoreProps["keyPassword"] as String
+                }
+            }
+        }
+    }
+
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            val releaseSigningConfig = signingConfigs.findByName("release")
+            if (releaseSigningConfig?.storeFile != null) {
+                signingConfig = releaseSigningConfig
+            }
         }
     }
     compileOptions {
