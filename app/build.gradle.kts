@@ -34,11 +34,11 @@ fun gitVersionName(): String {
 }
 
 android {
-    namespace = "se.mildtanke.routesuit"
+    namespace = "se.mildtanke.alltidredo"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "se.mildtanke.routesuit"
+        applicationId = "se.mildtanke.alltidredo"
         minSdk = 31
         targetSdk = 36
         versionCode = gitVersionCode()

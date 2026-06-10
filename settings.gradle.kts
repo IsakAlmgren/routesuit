@@ -22,6 +22,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "RouteSuit"
+rootProject.name = "AlltidRedo"
 include(":app")
  
